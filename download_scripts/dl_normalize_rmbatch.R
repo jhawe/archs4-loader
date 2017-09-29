@@ -72,12 +72,12 @@ print(paste0("Corrected expression file was created at ", getwd(), "/", extracte
 print("Creating heatmap and expression histogram.")
 library(pheatmap)
 pdf(file.path(keyword, "expression.pdf"))
-# boxplot of max 100 random samples
-toplot <- correctedExpression[,sample(1:ncol(correctedExpression),min(ncol(correctedExpression), 100))]
+# boxplot of max 300 random samples
+toplot <- correctedExpression[,sample(1:ncol(correctedExpression),min(ncol(correctedExpression), 300))]
 boxplot(as.data.frame(toplot))
-hist(correctedExpression, breaks=100)
+hist(toplot, breaks=100)
 # gene against gene correlation plots
-cors <- cor(t(correctedExpression))
+cors <- cor(t(toplot))
 pheatmap(cors)
 hist(cors, breaks=100)
 dev.off()
