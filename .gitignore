@@ -1,4 +1,5 @@
 *.h5
 *.tsv
+*.txt
 *.RData
 *.pdf

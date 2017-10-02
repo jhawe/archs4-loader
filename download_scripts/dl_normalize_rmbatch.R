@@ -43,10 +43,24 @@ samples = h5read(destination_file, "meta/Sample_geo_accession")
 # Identify columns to be extracted
 sample_locations = which(samples %in% samp)
 
+# get info for selected samples
 tissue = h5read(destination_file, "meta/Sample_source_name_ch1")
 genes = h5read(destination_file, "meta/genes")
 series = h5read(destination_file, "meta/Sample_series_id")
-series = series[sample_locations]
+organism = h5read(destination_file, "meta/Sample_organism_ch1")
+molecule = h5read(destination_file, "meta/Sample_molecule_ch1")
+characteristics = h5read(destination_file, "meta/Sample_characteristics_ch1")
+description = h5read(destination_file, "meta/Sample_description")
+instrument = h5read(destination_file, "meta/Sample_instrument_model")
+
+design = cbind(samples, tissue, series, organism, molecule, characteristics, description,
+               instrument)
+design = design[sample_locations,,drop=F]
+
+# write design file
+write.table(design, file=file.path(keyword, "design.txt"), sep="\t", quote=FALSE, col.names=T, row.names=F)
+print(paste0("Design file was created at ", getwd(), "/", keyword, "/design.txt"))
+
 
 # extract gene expression from compressed data
 expression = h5read(destination_file, "data/expression", index=list(1:length(genes), sample_locations))
@@ -74,9 +88,9 @@ library(pheatmap)
 pdf(file.path(keyword, "expression.pdf"))
 # boxplot of max 300 random samples
 toplot <- correctedExpression[,sample(1:ncol(correctedExpression),min(ncol(correctedExpression), 300))]
-boxplot(as.data.frame(toplot))
+boxplot(as.data.frame(toplot), main="expression of random samples", xlab="samples", ylab="expression")
 hist(toplot, breaks=100)
 # gene against gene correlation plots
 cors <- cor(t(toplot))
-hist(cors, breaks=100)
+hist(cors, breaks=100, main="correlation of genes", xlab="correlation")
 dev.off()
