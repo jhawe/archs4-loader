@@ -27,6 +27,10 @@ and creates some basic diagnostic plots in a subfolded named according to the sa
 # use the download+normalize+remove batch effect script on the samples
 # defined in samples/whole_blood.R
 Rscript scripts/download.R --normalize --rmbatch --samples=sample_definitions/whole_blood.R
+# or get heart samples
+Rscript scripts/getSamples.R heart
+# ... and extract
+Rscript scripts/download.R --normalize --rmbatch --samples=sample_definitions/heart.R
 ```
 
 ## TODOs
