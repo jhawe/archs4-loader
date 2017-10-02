@@ -53,7 +53,7 @@ characteristics = h5read(destination_file, "meta/Sample_characteristics_ch1")
 description = h5read(destination_file, "meta/Sample_description")
 instrument = h5read(destination_file, "meta/Sample_instrument_model")
 
-design = cbind(samples, tissue, series, organism, molecule, characteristics, description,
+design = cbind(sample=samples, tissue, series, organism, molecule, characteristics, description,
                instrument)
 design = design[sample_locations,,drop=F]
 
