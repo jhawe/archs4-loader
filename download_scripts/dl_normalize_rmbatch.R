@@ -78,6 +78,5 @@ boxplot(as.data.frame(toplot))
 hist(toplot, breaks=100)
 # gene against gene correlation plots
 cors <- cor(t(toplot))
-pheatmap(cors)
 hist(cors, breaks=100)
 dev.off()

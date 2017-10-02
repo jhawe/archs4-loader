@@ -1,0 +1,46 @@
+	group	name	otype	dclass	dim
+0	/	data	H5I_GROUP		
+1	/data	expression	H5I_DATASET	INTEGER	35238 x 65429
+2	/	info	H5I_GROUP		
+3	/info	author	H5I_DATASET	STRING	1
+4	/info	contact	H5I_DATASET	STRING	1
+5	/info	creation-date	H5I_DATASET	STRING	1
+6	/info	lab	H5I_DATASET	STRING	1
+7	/info	version	H5I_DATASET	STRING	1
+8	/	meta	H5I_GROUP		
+9	/meta	Sample_channel_count	H5I_DATASET	STRING	65429
+10	/meta	Sample_characteristics_ch1	H5I_DATASET	STRING	65429
+11	/meta	Sample_contact_address	H5I_DATASET	STRING	65429
+12	/meta	Sample_contact_city	H5I_DATASET	STRING	65429
+13	/meta	Sample_contact_country	H5I_DATASET	STRING	65429
+14	/meta	Sample_contact_department	H5I_DATASET	STRING	65429
+15	/meta	Sample_contact_email	H5I_DATASET	STRING	65429
+16	/meta	Sample_contact_institute	H5I_DATASET	STRING	65429
+17	/meta	Sample_contact_laboratory	H5I_DATASET	STRING	65429
+18	/meta	Sample_contact_name	H5I_DATASET	STRING	65429
+19	/meta	Sample_contact_phone	H5I_DATASET	STRING	65429
+20	/meta	Sample_contact_zip-postal_code	H5I_DATASET	STRING	65429
+21	/meta	Sample_data_processing	H5I_DATASET	STRING	65429
+22	/meta	Sample_data_row_count	H5I_DATASET	STRING	65429
+23	/meta	Sample_description	H5I_DATASET	STRING	65429
+24	/meta	Sample_extract_protocol_ch1	H5I_DATASET	STRING	65429
+25	/meta	Sample_geo_accession	H5I_DATASET	STRING	65429
+26	/meta	Sample_instrument_model	H5I_DATASET	STRING	65429
+27	/meta	Sample_last_update_date	H5I_DATASET	STRING	65429
+28	/meta	Sample_library_selection	H5I_DATASET	STRING	65429
+29	/meta	Sample_library_source	H5I_DATASET	STRING	65429
+30	/meta	Sample_library_strategy	H5I_DATASET	STRING	65429
+31	/meta	Sample_molecule_ch1	H5I_DATASET	STRING	65429
+32	/meta	Sample_organism_ch1	H5I_DATASET	STRING	65429
+33	/meta	Sample_platform_id	H5I_DATASET	STRING	65429
+34	/meta	Sample_relation	H5I_DATASET	STRING	65429
+35	/meta	Sample_series_id	H5I_DATASET	STRING	65429
+36	/meta	Sample_source_name_ch1	H5I_DATASET	STRING	65429
+37	/meta	Sample_status	H5I_DATASET	STRING	65429
+38	/meta	Sample_submission_date	H5I_DATASET	STRING	65429
+39	/meta	Sample_supplementary_file_1	H5I_DATASET	STRING	65429
+40	/meta	Sample_supplementary_file_2	H5I_DATASET	STRING	65429
+41	/meta	Sample_taxid_ch1	H5I_DATASET	STRING	65429
+42	/meta	Sample_title	H5I_DATASET	STRING	65429
+43	/meta	Sample_type	H5I_DATASET	STRING	65429
+44	/meta	genes	H5I_DATASET	STRING	35238
