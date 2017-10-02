@@ -53,14 +53,14 @@ characteristics = h5read(destination_file, "meta/Sample_characteristics_ch1")
 description = h5read(destination_file, "meta/Sample_description")
 instrument = h5read(destination_file, "meta/Sample_instrument_model")
 
-design = cbind(sample=samples, tissue, series, organism, molecule, characteristics, description,
+des = cbind(sample=samples, tissue, series, organism, molecule, characteristics, description,
                instrument)
-design = design[sample_locations,,drop=F]
+des = des[sample_locations,,drop=F]
 
 # write design file
-write.table(design, file=file.path(keyword, "design.txt"), sep="\t", quote=FALSE, col.names=T, row.names=F)
+write.table(des, file=file.path(keyword, "design.txt"), sep="\t", quote=FALSE, col.names=T, row.names=F)
 print(paste0("Design file was created at ", getwd(), "/", keyword, "/design.txt"))
-
+rm(des)
 
 # extract gene expression from compressed data
 expression = h5read(destination_file, "data/expression", index=list(1:length(genes), sample_locations))
@@ -74,6 +74,7 @@ rownames(expression) = genes
 colnames(expression) = samples[sample_locations]
 
 # correct batch effects in gene expression
+series = series[sample_locations]
 batchid = match(series, unique(series))
 correctedExpression <- ComBat(dat=expression, batch=batchid, par.prior=TRUE, prior.plots=FALSE)
 
