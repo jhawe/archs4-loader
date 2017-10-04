@@ -36,7 +36,8 @@ if(!require(optparse)){
 opt = parse_args(OptionParser(option_list=list(
   make_option(c("-s", "--samples"), type="character", default=NULL),
   make_option("--normalize", type="logical", action="store_true", default=FALSE),
-  make_option("--rmbatch", type="logical", action="store_true", default=FALSE))));
+  make_option("--sva", type="logical", action="store_true", default=FALSE),
+  make_option("--peer", type="logical", action="store_true", default=FALSE))));
 
 # define global vars
 samp.file = opt$samples
@@ -44,7 +45,14 @@ if(!file.exists(samp.file)){
   stop("Specified sample-file does not exist!")
 }
 NORM = opt$normalize
-RMBATCH = opt$rmbatch
+SVA = opt$sva
+PEER = opt$peer
+if(SVA & PEER) {
+  stop("Choose either COMBAT or PEER!")
+}
+if(PEER) {
+  source("scripts/peer.R")
+}
 
 # get the samples
 cat("Using samples defined in:", samp.file, "\n")
@@ -53,8 +61,23 @@ keyword <- gsub("\\..*", "", basename(samp.file))
 dir.create(keyword)
 print(paste0("Saving data under ./", keyword, "/"))
 
+# the actual archive file with data
 destination_file = "human_matrix_download.h5"
-extracted_expression_file = paste0(keyword, "/expression_matrix.tsv")
+
+# name of output expression file
+# depending in processing type
+`%+%` = paste0
+f = "expression_matrix"
+if(NORM) {
+  f = f %+% "_norm.tsv"
+}
+# peer or sva normalization?
+if(PEER) {
+  f = f %+% "_peer.tsv"
+} else if(SVA) {
+  f = f %+% "_sva.tsv"
+}
+extracted_expression_file = paste0(keyword, "/", f)
 
 # Check if gene expression file was already downloaded, if not in current directory download file form repository
 if(!file.exists(destination_file)){
@@ -94,20 +117,25 @@ expression = h5read(destination_file, "data/expression", index=list(1:length(gen
 H5close()
 
 # normalize samples and correct for differences in gene count distribution
-if(NORM){
+if(NORM | SVA | PEER){
   print("Normalizing data.")
   expression = log2(expression+1)
   expression = normalize.quantiles(expression)
 }
+
 rownames(expression) = genes
 colnames(expression) = samples[sample_locations]
 
 # correct batch effects in gene expression
-if(RMBATCH) {
-  print("Removing batch effects.")
+if(SVA) {
+  print("Removing batch effects using ComBat.")
   series = series[sample_locations]
   batchid = match(series, unique(series))
   expression <- ComBat(dat=expression, batch=batchid, par.prior=TRUE, prior.plots=FALSE)
+} else if(PEER) {
+  print("Removing batch effects using PEER.")
+  # peer expects an NxG matrix (N=#samples)
+  expression <- t(correct.peer(data=t(expression)))
 }
 
 # Print file
@@ -118,7 +146,7 @@ print(paste0("Expression file was created at ", getwd(), "/", extracted_expressi
 # of gene correlations
 print("Creating heatmap and expression histogram.")
 
-pdf(file.path(keyword, "expression.pdf"))
+pdf(gsub("\\.tsv$", ".pdf", extracted_expression_file))
 
 # boxplot and histogram of max 300 random samples
 toplot <- expression[,sample(1:ncol(expression),min(ncol(expression), 300))]
