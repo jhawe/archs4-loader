@@ -148,7 +148,7 @@ if(SVA) {
   transformed = apply(expression, 1, stdnorm)
 
   # peer expects an NxG matrix (N=#samples)
-  expression <- t(correct.peer(data=t(transformed), Nk=20))
+  expression <- t(correct.peer(data=transformed, Nk=20))
 }
 
 # Print file
