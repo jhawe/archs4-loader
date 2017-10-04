@@ -47,6 +47,10 @@ if(!file.exists(samp.file)){
 NORM = opt$normalize
 SVA = opt$sva
 PEER = opt$peer
+
+# we normalize if we use PEER or SVA
+NORM = NORM | PEER | SVA
+
 if(SVA & PEER) {
   stop("Choose either COMBAT or PEER!")
 }
@@ -136,8 +140,15 @@ if(SVA) {
   expression <- ComBat(dat=expression, batch=batchid, par.prior=TRUE, prior.plots=FALSE)
 } else if(PEER) {
   print("Removing batch effects using PEER.")
+  # transform the scaled counts to std normal per gene
+  stdnorm <- function(x) {
+    r = rank(x, ties.method="random")
+    qnorm(r / (length(x) + 1))
+  }
+  transformed = apply(mean.expr, 1, stdnorm)
+
   # peer expects an NxG matrix (N=#samples)
-  expression <- t(correct.peer(data=t(expression), Nk=20))
+  expression <- t(correct.peer(data=t(transformed), Nk=20))
 }
 
 # Print file
