@@ -145,7 +145,7 @@ if(SVA) {
     r = rank(x, ties.method="random")
     qnorm(r / (length(x) + 1))
   }
-  transformed = apply(mean.expr, 1, stdnorm)
+  transformed = apply(expression, 1, stdnorm)
 
   # peer expects an NxG matrix (N=#samples)
   expression <- t(correct.peer(data=t(transformed), Nk=20))
