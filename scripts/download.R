@@ -135,7 +135,7 @@ if(SVA) {
 } else if(PEER) {
   print("Removing batch effects using PEER.")
   # peer expects an NxG matrix (N=#samples)
-  expression <- t(correct.peer(data=t(expression)))
+  expression <- t(correct.peer(data=t(expression), Nk=20))
 }
 
 # Print file
