@@ -69,13 +69,15 @@ destination_file = "human_matrix_download.h5"
 `%+%` = paste0
 f = "expression_matrix"
 if(NORM) {
-  f = f %+% "_norm.tsv"
+  f = f %+% "_norm"
 }
 # peer or sva normalization?
 if(PEER) {
   f = f %+% "_peer.tsv"
 } else if(SVA) {
   f = f %+% "_sva.tsv"
+} else {
+  f = f %+% ".tsv"
 }
 extracted_expression_file = paste0(keyword, "/", f)
 
