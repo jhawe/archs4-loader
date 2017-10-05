@@ -139,7 +139,7 @@ if(SVA) {
   batchid = match(series, unique(series))
   expression <- ComBat(dat=expression, batch=batchid, par.prior=TRUE, prior.plots=FALSE)
 } else if(PEER) {
-  print("Removing batch effects using PEER.")
+  print("Removing batch effects using PEER.\nThis might take a while...")
   # transform the scaled counts to std normal per gene
   stdnorm <- function(x) {
     r = rank(x, ties.method="random")
@@ -149,6 +149,7 @@ if(SVA) {
 
   # peer expects an NxG matrix (N=#samples)
   expression <- t(correct.peer(data=transformed, Nk=20))
+  print("Done.")
 }
 
 # Print file
@@ -162,8 +163,9 @@ print("Creating heatmap and expression histogram.")
 pdf(gsub("\\.tsv$", ".pdf", extracted_expression_file))
 
 # boxplot and histogram of max 300 random samples
-toplot <- expression[,sample(1:ncol(expression),min(ncol(expression), 300))]
-boxplot(as.data.frame(toplot), main="expression of random samples", xlab="samples", ylab="expression")
+toplot <- data.matrix(expression[,sample(1:ncol(expression),min(ncol(expression), 300))])
+boxplot(as.data.frame(toplot), main="expression of random samples", 
+        xlab="samples", ylab="expression", outline=F)
 hist(toplot, breaks=100, main="expression values",xlab="expression")
 
 # gene against gene correlation plots
