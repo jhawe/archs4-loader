@@ -1,3 +1,5 @@
+#!/bin/usr/Rscript
+
 ###################################################################
 #'                                                                #
 #' The scripts parses the available design file for all available #
@@ -9,9 +11,12 @@
 #'                                                                #
 ###################################################################
 
+# load libraries
+library(tidyverse)
+
 # get arguments and load design
 args <- commandArgs(trailingOnly=T)
-design <- read.table("design_all_samples.txt", header=T, stringsAsFactors=F, sep="\t")
+design <- read_tsv("design_all_samples.tsv")
 tissues <- design$tissue
 
 # define vector of which samples are to be used,
