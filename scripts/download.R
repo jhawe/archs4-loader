@@ -176,7 +176,7 @@ pdf(gsub("\\.tsv$", ".pdf", extracted_expression_file))
 toplot <- data.matrix(expression[,sample(1:ncol(expression),min(ncol(expression), 150))])
 toplot_melt <- melt(toplot)
 
-ggplot(toplot_melt, aes(y=value, x=Var2)) + 
+ggplot(toplot_melt, aes(y=value, x=variable)) + 
   geom_boxplot() + 
   xlab("samples") +
   ylab("normalized expression") + 
@@ -187,8 +187,9 @@ ggplot(toplot_melt, aes(x=value)) +
   ggtitle("Distribution of expression values over 150 samples.")
 
 # gene against gene correlation plots
-corr_melt <- melt(cor(t(toplot)))
-ggplot(corr_melt, aes(x=value)) + 
+corr <- cor(t(toplot))
+corr <- cbind.data.frame(correlation=corr[upper.tri(corr, diag=F)])
+ggplot(corr, aes(x=correlation)) + 
   geom_histogram() + 
   ggtitle("Distribution of gene-gene correlations.")
 
