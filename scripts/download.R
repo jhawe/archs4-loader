@@ -14,27 +14,34 @@
 # Copy code and run on a local machine to initiate download
 
 # Check for dependencies and install if missing
-packages <- c("rhdf5", "preprocessCore", "sva")
-if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
-    print("Install required packages")
-    source("https://bioconductor.org/biocLite.R")
-    biocLite("rhdf5")
-    biocLite("preprocessCore")
-    biocLite("sva")
-}
-library("rhdf5")
-library("preprocessCore")
-library("sva")
+print("Install required packages")
+source("https://bioconductor.org/biocLite.R")
 
-# check package for option parsing
-if(!require(optparse)){
-  install.packages(optparse)
+if(!require(rhdf5)) {
+  biocLite("rhdf5")
+  library(rhdf5)
 }
+if(!require(preprocessCore)) {
+  biocLite("preprocessCore")
+  library(preprocessCore)
+}
+if(!require(sva)) {
+  biocLite("sva")
+  library(sva)
+}
+if(!require(optparse)){
+  biocLite("optparse")
+  library(optparse)
+}
+
+# we assume these are here :P
+library(ggplot2)
+library(reshape2)
 
 # parse arguments
 # get arguments and define global vars
 opt = parse_args(OptionParser(option_list=list(
-  make_option(c("-s", "--samples"), type="character", default=NULL),
+  make_option(c("-s", "--samples"), type="character", default=""),
   make_option("--normalize", type="logical", action="store_true", default=FALSE),
   make_option("--sva", type="logical", action="store_true", default=FALSE),
   make_option("--peer", type="logical", action="store_true", default=FALSE))));
@@ -161,15 +168,28 @@ print(paste0("Expression file was created at ", getwd(), "/", extracted_expressi
 # of gene correlations
 print("Creating heatmap and expression histogram.")
 
+theme_set(theme_bw())
+
 pdf(gsub("\\.tsv$", ".pdf", extracted_expression_file))
 
-# boxplot and histogram of max 300 random samples
-toplot <- data.matrix(expression[,sample(1:ncol(expression),min(ncol(expression), 300))])
-boxplot(as.data.frame(toplot), main="expression of random samples", 
-        xlab="samples", ylab="expression", outline=F)
-hist(toplot, breaks=100, main="expression values",xlab="expression")
+# boxplot and histogram of max 150 random samples
+toplot <- data.matrix(expression[,sample(1:ncol(expression),min(ncol(expression), 150))])
+toplot_melt <- melt(toplot)
+
+ggplot(toplot_melt, aes(y=value, x=Var2)) + 
+  geom_boxplot() + 
+  xlab("samples") +
+  ylab("normalized expression") + 
+  ggtitle("Expression distribution of 150 random samples")
+
+ggplot(toplot_melt, aes(x=value)) + 
+  geom_histogram(stat = "density") + 
+  ggtitle("Distribution of expression values over 150 samples.")
 
 # gene against gene correlation plots
-cors <- cor(t(toplot))
-hist(cors, breaks=100, main="correlation of genes", xlab="correlation")
+corr_melt <- melt(cor(t(toplot)))
+ggplot(corr_melt, aes(x=value)) + 
+  geom_histogram() + 
+  ggtitle("Distribution of gene-gene correlations.")
+
 dev.off()
