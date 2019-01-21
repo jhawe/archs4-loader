@@ -173,7 +173,7 @@ theme_set(theme_bw())
 pdf(gsub("\\.tsv$", ".pdf", extracted_expression_file))
 
 # boxplot and histogram of max 150 random samples
-toplot <- data.matrix(expression[,sample(1:ncol(expression),min(ncol(expression), 150))])
+toplot <- data.frame(expression[,sample(1:ncol(expression),min(ncol(expression), 150))])
 toplot_melt <- melt(toplot)
 
 ggplot(toplot_melt, aes(y=value, x=variable)) + 
