@@ -6,8 +6,9 @@ The download script is adjusted from the scripts which are provided by the ARCHS
 Furthermore, simple diagnostic plots are created for the extracted data.
 
 ## Snakemake
-We now moved to a [Snakemake]() based approach get the workflow fully automated.
-Currently, most of the pipeline can be called by executing the following code:
+We now moved to a [Snakemake]() based approach in order to get the workflow fully automated.
+Currently, most of the pipeline can be called by executing the following line of code in the
+root directory of the project:
 
 ```{bash}
 snakemake results/downloads/{your_keywords}/design.tsv
@@ -18,7 +19,10 @@ annotated in there tissue meta-data field.
 As of now, the downloaded expression data will be automatically normalized using [ComBat](https://www.bu.edu/jlab/wp-assets/ComBat/Abstract.html)
 
 ## TODOs
-
 After downloading and processing the data, we want to go one step further and provide a basic
-overview. This will be implemented as Rmarkdown file and will ultimately be available in the 
-snakemake workflow.
+overview. This will be implemented as an Rmarkdown file and will ultimately be available in the 
+snakemake workflow, e.g. like this:
+
+```{bash}
+snakemake results/downloads/{your_keywords}/summary.html
+```
