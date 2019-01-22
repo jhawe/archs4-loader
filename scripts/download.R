@@ -14,7 +14,7 @@
 # Copy code and run on a local machine to initiate download
 
 # Check for dependencies and install if missing
-print("Install required packages")
+print("Checking for required packages")
 source("https://bioconductor.org/biocLite.R")
 
 if(!require(rhdf5)) {
@@ -42,6 +42,7 @@ library(reshape2)
 # get arguments and define global vars
 opt = parse_args(OptionParser(option_list=list(
   make_option(c("-s", "--samples"), type="character", default=""),
+  make_option("--plot", type="logical", action="store_true", default=FALSE),
   make_option("--normalize", type="logical", action="store_true", default=FALSE),
   make_option("--sva", type="logical", action="store_true", default=FALSE),
   make_option("--peer", type="logical", action="store_true", default=FALSE))));
@@ -54,6 +55,7 @@ if(!file.exists(samp.file)){
 NORM = opt$normalize
 SVA = opt$sva
 PEER = opt$peer
+PLOT = opt$plot
 
 # we normalize if we use PEER or SVA
 NORM = NORM | PEER | SVA
@@ -164,33 +166,36 @@ if(SVA) {
 write.table(expression, file=extracted_expression_file, sep="\t", quote=FALSE, col.names=NA, row.names=T)
 print(paste0("Expression file was created at ", getwd(), "/", extracted_expression_file))
 
-# Create histogram of expression values and heatmap
-# of gene correlations
-print("Creating heatmap and expression histogram.")
+if(plot) {
 
-theme_set(theme_bw())
+  # Create histogram of expression values and heatmap
+  # of gene correlations
+  print("Creating heatmap and expression histogram.")
 
-pdf(gsub("\\.tsv$", ".pdf", extracted_expression_file))
+  theme_set(theme_bw())
 
-# boxplot and histogram of max 150 random samples
-toplot <- data.frame(expression[,sample(1:ncol(expression),min(ncol(expression), 150))])
-toplot_melt <- melt(toplot)
+  pdf(gsub("\\.tsv$", ".pdf", extracted_expression_file))
+ 
+  # boxplot and histogram of max 150 random samples
+  toplot <- data.frame(expression[,sample(1:ncol(expression),min(ncol(expression), 150))])
+  toplot_melt <- melt(toplot)
 
-ggplot(toplot_melt, aes(y=value, x=variable)) + 
-  geom_boxplot() + 
-  xlab("samples") +
-  ylab("normalized expression") + 
-  ggtitle("Expression distribution of 150 random samples")
+  ggplot(toplot_melt, aes(y=value, x=variable)) + 
+    geom_boxplot() + 
+    xlab("samples") +
+    ylab("normalized expression") + 
+    ggtitle("Expression distribution of 150 random samples")
 
-ggplot(toplot_melt, aes(x=value)) + 
-  geom_histogram(stat = "density") + 
-  ggtitle("Distribution of expression values over 150 samples.")
+  ggplot(toplot_melt, aes(x=value)) + 
+    geom_histogram(stat = "density") + 
+    ggtitle("Distribution of expression values over 150 samples.")
 
-# gene against gene correlation plots
-corr <- cor(t(toplot))
-corr <- cbind.data.frame(correlation=corr[upper.tri(corr, diag=F)])
-ggplot(corr, aes(x=correlation)) + 
-  geom_histogram() + 
-  ggtitle("Distribution of gene-gene correlations.")
+  # gene against gene correlation plots
+  corr <- cor(t(toplot))
+  corr <- cbind.data.frame(correlation=corr[upper.tri(corr, diag=F)])
+  ggplot(corr, aes(x=correlation)) + 
+    geom_histogram() + 
+    ggtitle("Distribution of gene-gene correlations.")
 
-dev.off()
+  dev.off()
+}
