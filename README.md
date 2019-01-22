@@ -5,57 +5,20 @@ a definition of samples can be obtained from the [ARCHS<sup>4</sup> data portal]
 The download script is adjusted from the scripts which are provided by the ARCHS<sup>4</sup> website, allowing for optional normalization and batch effect removal.
 Furthermore, simple diagnostic plots are created for the extracted data.
 
-## Creating a sample sheet
-To create a new sample/design sheet, simply call the script 'create_sample_sheet.R' with no arguments.
-This will 
-
-- download the main h5 file
-- extract information from ALL samples contained in this file
+## Snakemake
+We now moved to a [Snakemake]() based approach get the workflow fully automated.
+Currently, most of the pipeline can be called by executing the following code:
 
 ```{bash}
-Rscript scripts/create_sample_sheet.R
+snakemake results/downloads/{your_keywords}/design.tsv
 ```
 
-## Defining samples
-You can create definitions of which samples to be used for extracting expression data (i.e., files
-located under `./sample_definitions/`) by using the `./scripts/getSamples.R` R script.
-The given keywords are currently searched independently (in an 'either or' fashion) in the 'tissue' meta data field only.
-If you want more keywords connected by 'AND', enclose them with quotes like in the example below.
-
-### Example
-```{bash}
-Rscript scripts/getSamples.R "Whole blood"
-Rscript scripts/getSamples.R heart
-Rscript scripts/getSamples.R "Skeletal Muscle"
-```
-
-## Extracting data
-The download script is based on the human_matrix_download.h5 file located in (and independently downloaded to) the root directory of the project.
-The \*.h5 file is an archive file which contains all data and meta data relevant to get the 
-gene expression data from the ARCHS<sup>4</sup> repository. If the file does not yet exist in the repositories root directors (it is NOT provided in the repository at the moment) then it gets downloade from the ARCHS<sup>4</sup> website once. 
-The download script (`./scripts/download.R`) (and the sample sheet creation script) check whether the file already exists and then use the file to extract the relevant sample design or expression data. The download script extracts the (normalized) expression data for the specified samples and creates some basic diagnostic plots in a subfolded named according to the sample-definition script.
-
-### Available arguments
-
-|Flag|Meaning|
-|-----|------|
-|`--samples`|The sample definition file which can be sourced in R. Compare files in 'sample_definitions/'|
-|`--normalize`|Whether to perform log-transform and quantile normalization|
-|`--sva`|Whether to use SVA based batch effect removal|
-|`--peer`|Whether to use PEER based batch effect removal|
-
-## Example
-```{bash}
-# download whole_blood samples
-Rscript scripts/download.R --normalize --sva --samples=sample_definitions/whole_blood.R
-# download whole_blood samples (raw counts)
-Rscript scripts/download.R --samples=sample_definitions/whole_blood.R
-# download heart samples using peer
-Rscript scripts/download.R --normalize --peer --samples=sample_definitions/heart.R
-```
+This will obtain all samples from ARCHS<sup>4</sup> which have the specified keywords (separated by "_") 
+annotated in there tissue meta-data field.
+As of now, the downloaded expression data will be automatically normalized using [ComBat](https://www.bu.edu/jlab/wp-assets/ComBat/Abstract.html)
 
 ## TODOs
 
-* versioning of h5 file (e.g. by month/year)
-* check for ChIP-seq data as well
-* check batch effect removal of normalized expression data
+After downloading and processing the data, we want to go one step further and provide a basic
+overview. This will be implemented as Rmarkdown file and will ultimately be available in the 
+snakemake workflow.
