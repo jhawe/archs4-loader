@@ -42,6 +42,6 @@ rule explore_data:
 	input:
 		expr="results/downloads/{keywords}/expression_matrix_norm_sva.tsv"
 	output:
-		"results/downloads/{keywords}/exploration.pdf"
+		"results/downloads/{keywords}/summary.pdf"
 	script:
 		"scripts/explore_data.Rmd"
