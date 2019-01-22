@@ -12,19 +12,18 @@
 ###################################################################
 
 # Check for dependencies and install if missing
-packages <- c("rhdf5", "preprocessCore", "sva")
-if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
+if (!require("rhdf5")) {
     print("Install required packages")
     source("https://bioconductor.org/biocLite.R")
     biocLite("rhdf5")
+    library("rhdf5")
 }
-library("rhdf5")
-
-# the actual archive file with data
-destination_file = "human_matrix_download.h5"
 
 # name of output expression file
-design_file = "design_all_samples.tsv"
+design_file = snakemake@output[[1]]
+
+# the actual archive file with data
+destination_file = snakemake@output[[2]]
 
 # Check if gene expression file was already downloaded, if not in current directory download file form repository
 if(!file.exists(destination_file)){

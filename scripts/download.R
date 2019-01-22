@@ -10,9 +10,13 @@
 #'                                                                #
 ###################################################################
 
-# R script to download selected samples
-# Copy code and run on a local machine to initiate download
+log <- file(snakemake@log[[1]], open="wt")
+sink(log)
+sink(log, type="message")
 
+# -----------------------------------------------------------------
+# Prepare libraries
+# -----------------------------------------------------------------
 # Check for dependencies and install if missing
 print("Checking for required packages")
 source("https://bioconductor.org/biocLite.R")
@@ -38,24 +42,25 @@ if(!require(optparse)){
 library(ggplot2)
 library(reshape2)
 
-# parse arguments
-# get arguments and define global vars
-opt = parse_args(OptionParser(option_list=list(
-  make_option(c("-s", "--samples"), type="character", default=""),
-  make_option("--plot", type="logical", action="store_true", default=FALSE),
-  make_option("--normalize", type="logical", action="store_true", default=FALSE),
-  make_option("--sva", type="logical", action="store_true", default=FALSE),
-  make_option("--peer", type="logical", action="store_true", default=FALSE))));
+# -----------------------------------------------------------------
+# Get snakemake params
+# -----------------------------------------------------------------
 
-# define global vars
-samp.file = opt$samples
-if(!file.exists(samp.file)){
-  stop("Specified sample-file does not exist!")
-}
-NORM = opt$normalize
-SVA = opt$sva
-PEER = opt$peer
-PLOT = opt$plot
+# input
+fsamples = snakemake@input$samples
+fh5 = snakemake@input$h5
+
+# output
+fexpr = snakemake@output$expr
+fplot = snakemake@output$plot
+fdesign = snakemake@output$design
+
+# params
+# TODO: get these via snakemake
+NORM = T
+SVA = T
+PEER = F
+PLOT = T
 
 # we normalize if we use PEER or SVA
 NORM = NORM | PEER | SVA
@@ -63,72 +68,46 @@ NORM = NORM | PEER | SVA
 if(SVA & PEER) {
   stop("Choose either COMBAT or PEER!")
 }
+
 if(PEER) {
   source("scripts/peer.R")
 }
 
+# -----------------------------------------------------------------
+# Prepare data
+# -----------------------------------------------------------------
+
 # get the samples
-cat("Using samples defined in:", samp.file, "\n")
-source(samp.file)
-keyword <- gsub("\\..*", "", basename(samp.file))
-dir.create(keyword)
-print(paste0("Saving data under ./", keyword, "/"))
-
-# the actual archive file with data
-destination_file = "human_matrix_download.h5"
-
-# name of output expression file
-# depending in processing type
-`%+%` = paste0
-f = "expression_matrix"
-if(NORM) {
-  f = f %+% "_norm"
-}
-# peer or sva normalization?
-if(PEER) {
-  f = f %+% "_peer.tsv"
-} else if(SVA) {
-  f = f %+% "_sva.tsv"
-} else {
-  f = f %+% ".tsv"
-}
-extracted_expression_file = paste0(keyword, "/", f)
-
-# Check if gene expression file was already downloaded, if not in current directory download file form repository
-if(!file.exists(destination_file)){
-    print("Downloading compressed gene expression matrix.")
-    url = "https://s3.amazonaws.com/mssm-seq-matrix/human_matrix.h5"
-    download.file(url, destination_file, quiet = FALSE)
-} else{
-    print("Local data file already exists.")
-}
+source(fsamples)
 
 # Retrieve information from compressed data
-samples = h5read(destination_file, "meta/Sample_geo_accession")
+samples = h5read(fh5, "meta/Sample_geo_accession")
 # Identify columns to be extracted
 sample_locations = which(samples %in% samp)
 
 # get info for selected samples
-tissue = h5read(destination_file, "meta/Sample_source_name_ch1")
-genes = h5read(destination_file, "meta/genes")
-series = h5read(destination_file, "meta/Sample_series_id")
-organism = h5read(destination_file, "meta/Sample_organism_ch1")
-molecule = h5read(destination_file, "meta/Sample_molecule_ch1")
-characteristics = h5read(destination_file, "meta/Sample_characteristics_ch1")
-description = h5read(destination_file, "meta/Sample_description")
-instrument = h5read(destination_file, "meta/Sample_instrument_model")
+tissue = h5read(fh5, "meta/Sample_source_name_ch1")
+genes = h5read(fh5, "meta/genes")
+series = h5read(fh5, "meta/Sample_series_id")
+organism = h5read(fh5, "meta/Sample_organism_ch1")
+molecule = h5read(fh5, "meta/Sample_molecule_ch1")
+characteristics = h5read(fh5, "meta/Sample_characteristics_ch1")
+description = h5read(fh5, "meta/Sample_description")
+instrument = h5read(fh5, "meta/Sample_instrument_model")
 
-des = cbind(sample=samples, tissue, series, organism, molecule, characteristics, description,
+design = cbind(sample=samples, tissue, series, organism, molecule, characteristics, description,
                instrument)
-des = des[sample_locations,,drop=F]
+design = design[sample_locations,,drop=F]
 
 # write design file
-write.table(des, file=file.path(keyword, "design.txt"), sep="\t", quote=T, col.names=T, row.names=F)
-print(paste0("Design file was created at ", getwd(), "/", keyword, "/design.txt"))
-rm(des)
+write.table(file=fdesign, design, sep="\t", quote=T, col.names=T, row.names=F)
+
+# -----------------------------------------------------------------
+# Extract and normalize expression data
+# -----------------------------------------------------------------
 
 # extract gene expression from compressed data
-expression = h5read(destination_file, "data/expression", index=list(1:length(genes), sample_locations))
+expression = h5read(fh5, "data/expression", index=list(1:length(genes), sample_locations))
 H5close()
 
 # normalize samples and correct for differences in gene count distribution
@@ -162,11 +141,14 @@ if(SVA) {
   print("Done.")
 }
 
-# Print file
-write.table(expression, file=extracted_expression_file, sep="\t", quote=FALSE, col.names=NA, row.names=T)
-print(paste0("Expression file was created at ", getwd(), "/", extracted_expression_file))
+# -----------------------------------------------------------------
+# Save file and do some default plots
+# -----------------------------------------------------------------
 
-if(plot) {
+# Print file
+write.table(expression, file=fexpr, sep="\t", quote=FALSE, col.names=NA, row.names=T)
+
+if(PLOT) {
 
   # Create histogram of expression values and heatmap
   # of gene correlations
@@ -174,7 +156,7 @@ if(plot) {
 
   theme_set(theme_bw())
 
-  pdf(gsub("\\.tsv$", ".pdf", extracted_expression_file))
+  pdf(fplot)
  
   # boxplot and histogram of max 150 random samples
   toplot <- data.frame(expression[,sample(1:ncol(expression),min(ncol(expression), 150))])
@@ -199,3 +181,10 @@ if(plot) {
 
   dev.off()
 }
+
+# -----------------------------------------------------------------
+# Session info
+# -----------------------------------------------------------------
+sessionInfo()
+sink()
+sink(type="message")

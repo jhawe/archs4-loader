@@ -15,47 +15,37 @@
 library(tidyverse)
 
 # get arguments and load design
-args <- commandArgs(trailingOnly=T)
-design <- read_tsv("design_all_samples.tsv")
+design <- read_tsv(snakemake@input$design)
 tissues <- design$tissue
+
+# get output file
+fout <- snakemake@output[[1]]
+
+# get keywords
+keywords <- snakemake@wildcards$keywords
+# we assume "_" in the keywords for word separation
+keywords <- strsplit(keywords, "_")[[1]]
 
 # define vector of which samples are to be used,
 # i.e. are matching the keywords
-use <- rep(F, nrow(design))
-ofile <- "sample_definitions/"
-for(i in 1:length(args)){
-  a <- args[i]
-  a <- tolower(strsplit(a, " ")[[1]])
-  u <- NULL
-  for(p in a){
-    if(is.null(u)){
-      u <- grepl(p, tissues, ignore.case=T)
-    } else {     
-      u <- u & grepl(p, tissues, ignore.case=T)
-    }
-
-    # first addition, avoid the '_' 
-    if(nchar(ofile)==19){
-      ofile <- paste0(ofile, p)
-    } else {
-      ofile <- paste0(ofile, "_", p)
-    }
+use <- NULL
+for(k in keywords){
+  if(is.null(use)){
+    use <- grepl(k, tissues, ignore.case=T)
+  } else {     
+    use <- use & grepl(k, tissues, ignore.case=T)
   }
-  use <- use | u
 }
-
-# add file extension
-ofile <- paste0(ofile, ".R")
 
 # get the matching samples and write to output file
 # (as a R-vector definition)
 samples <- design[use,]$sample
-cat("Found", length(samples), "samples.\n")
-cat(file=ofile, "samp <- c(")
+print(paste0("Found ", length(samples), " samples."))
+cat(file=fout, "samp <- c(")
 for(i in 1:length(samples)) {
   if(i==length(samples)){
-    cat(file=ofile, paste0("\"", samples[i], "\")"), append=T)
+    cat(file=fout, paste0("\"", samples[i], "\")"), append=T)
   } else {
-    cat(file=ofile, paste0("\"", samples[i], "\",\n"), append=T)
+    cat(file=fout, paste0("\"", samples[i], "\",\n"), append=T)
   }
 }
