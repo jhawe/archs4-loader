@@ -60,7 +60,7 @@ fdesign = snakemake@output$design
 NORM = T
 SVA = T
 PEER = F
-PLOT = T
+PLOT = F
 
 # we normalize if we use PEER or SVA
 NORM = NORM | PEER | SVA
