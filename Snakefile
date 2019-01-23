@@ -40,8 +40,9 @@ rule download_samples:
 # ------------------------------------------------------------------------------
 rule explore_data:
 	input:
-		expr="results/downloads/{keywords}/expression_matrix_norm_sva.tsv"
+		expr="results/downloads/{keywords}/expression_matrix_norm_sva.tsv",
+		design="results/downloads/{keywords}/design.tsv"
 	output:
-		"results/downloads/{keywords}/summary.pdf"
+		"results/downloads/{keywords}/summary.html"
 	script:
 		"scripts/explore_data.Rmd"

@@ -24,5 +24,5 @@ overview. This will be implemented as an Rmarkdown file and will ultimately be a
 snakemake workflow, e.g. like this:
 
 ```{bash}
-snakemake results/downloads/{your_keywords}/summary.pdf
+snakemake results/downloads/{your_keywords}/summary.html
 ```
