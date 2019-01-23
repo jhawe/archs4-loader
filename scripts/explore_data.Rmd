@@ -1,6 +1,9 @@
 ---
 title: "Exploration of ARCHS4 gene expression data"
-output: html_notebook
+output: 
+  html_document:
+    fig_width: 10
+
 ---
 
 ```{r libraries}
@@ -130,5 +133,6 @@ ggplot(toplot, aes(x=dim1, y=dim2, col=series)) +
 
 
 ## Session Info
+```{r}
 sessionInfo()
-
+```
