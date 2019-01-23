@@ -36,7 +36,7 @@ rule download_samples:
 		"scripts/download.R"
 
 # ------------------------------------------------------------------------------
-# TODO: explore the data and create a nice summary
+# Explore the data and create a nice summary
 # ------------------------------------------------------------------------------
 rule explore_data:
 	input:
