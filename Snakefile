@@ -28,7 +28,7 @@ rule download_samples:
 		samples="results/sample_definitions/{keywords}.R"
 	output:
 		expr="results/downloads/{keywords}/expression_matrix_norm_sva.tsv",
-		plot="results/downloads/{keywords}/expression_matrix_norm_sva.pdf",
+#		plot="results/downloads/{keywords}/expression_matrix_norm_sva.pdf",
 		design="results/downloads/{keywords}/design.tsv"
 	log:
 		"logs/download_samples_{keywords}.log"
