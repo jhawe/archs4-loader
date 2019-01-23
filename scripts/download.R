@@ -3,8 +3,8 @@
 #' http://amp.pharm.mssm.edu/archs4/help.html                     #
 #'                                                                #
 #' We essentially extract the needed data from the downloaded     #
-#' archive and normalize it if necessary. Additionally we create  #
-#' some basic diagnostic plots on the data.                       #
+#' archive and normalize it if wanted                             #
+#' Optionally, some basic summary plots can be created.           #
 #'                                                                #
 #' @author Johann Hawe                                            #
 #'                                                                #
@@ -95,19 +95,22 @@ characteristics = h5read(fh5, "meta/Sample_characteristics_ch1")
 description = h5read(fh5, "meta/Sample_description")
 instrument = h5read(fh5, "meta/Sample_instrument_model")
 
-design = cbind(sample=samples, tissue, series, organism, molecule, characteristics, description,
-               instrument)
+design = cbind(sample=samples, tissue, series, 
+               organism, molecule, characteristics, 
+               description, instrument)
 design = design[sample_locations,,drop=F]
 
 # write design file
-write.table(file=fdesign, design, sep="\t", quote=T, col.names=T, row.names=F)
+write.table(file=fdesign, design, sep="\t", 
+            quote=T, col.names=T, row.names=F)
 
 # -----------------------------------------------------------------
 # Extract and normalize expression data
 # -----------------------------------------------------------------
 
 # extract gene expression from compressed data
-expression = h5read(fh5, "data/expression", index=list(1:length(genes), sample_locations))
+expression = h5read(fh5, "data/expression", 
+                    index=list(1:length(genes), sample_locations))
 H5close()
 
 # normalize samples and correct for differences in gene count distribution
@@ -125,9 +128,10 @@ if(SVA) {
   print("Removing batch effects using ComBat.")
   series = series[sample_locations]
   batchid = match(series, unique(series))
-  expression <- ComBat(dat=expression, batch=batchid, par.prior=TRUE, prior.plots=FALSE)
+  expression <- ComBat(dat=expression, batch=batchid, 
+                       par.prior=TRUE, prior.plots=FALSE)
 } else if(PEER) {
-  print("Removing batch effects using PEER.\nThis might take a while...")
+  print("Removing batch effects using PEER.")
   # transform the scaled counts to std normal per gene
   stdnorm <- function(x) {
     r = rank(x, ties.method="random")
@@ -146,7 +150,8 @@ if(SVA) {
 # -----------------------------------------------------------------
 
 # Print file
-write.table(expression, file=fexpr, sep="\t", quote=FALSE, col.names=NA, row.names=T)
+write.table(expression, file=fexpr, sep="\t", 
+            quote=FALSE, col.names=NA, row.names=T)
 
 if(PLOT) {
 
@@ -159,7 +164,8 @@ if(PLOT) {
   pdf(fplot)
  
   # boxplot and histogram of max 150 random samples
-  toplot <- data.frame(expression[,sample(1:ncol(expression),min(ncol(expression), 150))])
+  toplot <- data.frame(expression[,sample(1:ncol(expression),
+                                          min(ncol(expression), 150))])
   toplot_melt <- melt(toplot)
 
   ggplot(toplot_melt, aes(y=value, x=variable)) + 
