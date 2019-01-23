@@ -25,6 +25,9 @@ overview. This is implemented as an Rmarkdown and is now integrated in the snake
 ```{bash}
 snakemake results/downloads/{your_keywords}/summary.html
 ```
+## Note
+Snakemake version 5.2.2 or greater is required for the Rmarkdown to render properly.
+This version contains a bugfix crucial for successfully loading the data
 
 # TODOs
 - allow parametrization (e.g. type of normalization, raw data saving etc)
