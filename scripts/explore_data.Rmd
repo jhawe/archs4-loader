@@ -1,0 +1,134 @@
+---
+title: "Exploration of ARCHS4 gene expression data"
+output: html_notebook
+---
+
+```{r libraries}
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", 
+                      message = FALSE, warning=FALSE)
+library(tidyverse)
+library(ggplot2)
+library(reshape2)
+library(knitr)
+library(pheatmap)
+library(Rtsne)
+
+expr <- read_tsv(snakemake@input$expr) %>%
+  rename(gene_name = X1)
+
+design <- read_tsv(snakemake@input$design) %>%
+  mutate(tissue = gsub("Homo sapiens |Human","",tissue))
+
+# sanity check for sample ordering
+print("Order of samples in expr and design is the same:")
+all(colnames(expr %>% mutate(gene_name = NULL)) == design$sample)
+
+```
+# Inroduction
+
+This is an exploratory analysis of the downloaded and processed ARCH4 data for
+the tissue keywords "`r snakemake@wildcards$keywords`".
+These data consists of `r nrow(expr)` genes measured in `r ncol(expr)-1` samples.
+
+Let's check the expression and corresponding design tables:
+
+```{r load_data}
+
+print("Expression:")
+kable(head(expr))
+
+print("Design:")
+kable(head(design))
+```
+
+The design table contains the following column names:
+```{r design_cols}
+colnames(design)
+```
+
+We now have a look at the individual columns, specifically what kind of values 
+we can find.
+Below we show for each column of the design matrix the unique values contained
+therein.
+
+```{r values_by_cols}
+lapply(colnames(design), function(x) {
+  design %>% select(one_of(x)) %>% unique
+})
+```
+
+Let's also check how many samples we get if we group by the individual values 
+for each of the columns:
+
+```{r samples_by_groups}
+# we remove id, series and description
+cols <- colnames(design)[-c(1,3,5)]
+
+lapply(cols, function(x) {
+  design %>% group_by_(.dots = as.symbol(x)) %>% 
+    summarize(count=n()) %>% 
+    arrange(desc(count))
+})
+
+```
+
+# Gene expression
+
+Ok, now let's have a look at the actual gene expression data.
+We will have a look at the histogram of all expression values and a heatmap
+of the top 1% most variable genes.
+
+```{r expression_overview}
+expr_subs <- expr
+expr_subs$gene_name <- NULL
+expr$gene_var <- apply(expr_subs,1,var)
+expr_subs <- filter(expr, gene_var > quantile(gene_var, .99))
+
+# histogram
+toplot <- expr %>% mutate(gene_var = NULL, gene_name = NULL) %>%
+  melt
+ggplot(toplot, aes(x=value)) + geom_histogram() + xlab("expression") + 
+  ggtitle("Distribution of expression values.")
+
+# heatmap
+expr_corr <- mutate(expr_subs, gene_var = NULL, gene_name = NULL) %>% t %>% cor
+pheatmap(expr_corr, main = "Expression correlations of top 1% variable genes.")
+
+```
+
+# t-SNE
+Now let's do some tSNE plots to see whether we can see any specific clusters emerging.
+
+```{r tsne}
+
+expr_subs <- t(mutate(expr, gene_var = NULL, gene_name = NULL))
+
+# tsne
+reduction <- Rtsne(expr_subs, max_iter = 500, theta = 0.0, 
+                   dims = 2, perplexity = 30)
+
+# plotting
+toplot <- data.frame(reduction$Y)
+colnames(toplot) <- c("dim1", "dim2")
+
+toplot <- cbind(toplot, tissue = design$tissue, instrument = design$instrument,
+                series=design$series)
+
+ggplot(toplot, aes(x=dim1, y=dim2, col=tissue)) + 
+  geom_point() + 
+  ggtitle("t-SNE on gene expression data labeled \nby 'tissue' meta-data information")
+
+ggplot(toplot, aes(x=dim1, y=dim2, col=instrument)) + 
+  geom_point() + 
+  ggtitle("t-SNE on gene expression data labeled \nby 'instrument' meta-data information")
+
+ggplot(toplot, aes(x=dim1, y=dim2, col=series)) + 
+  geom_point() + 
+  ggtitle("t-SNE on gene expression data labeled \nby 'Series' meta-data information")
+
+```
+
+
+## Session Info
+sessionInfo()
+
