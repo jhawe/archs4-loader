@@ -46,3 +46,16 @@ rule explore_data:
 		"results/downloads/{keywords}/summary.html"
 	script:
 		"scripts/explore_data.Rmd"
+
+# ------------------------------------------------------------------------------
+# Target rule to process some interesting tissues
+# ------------------------------------------------------------------------------
+rule explore_thyroid_blood_muscle:
+	input:
+		"results/downloads/Thyroid/summary.html",
+		"results/downloads/Whole_Blood/summary.html",
+		"results/downloads/Skeletal_Muscle/summary.html"
+	output:
+		"results/summaries.zip"
+	shell:
+		"zip {output[0]} {input}"
