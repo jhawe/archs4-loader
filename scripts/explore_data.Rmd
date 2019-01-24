@@ -19,8 +19,9 @@ library(Rtsne)
 expr <- read_tsv(snakemake@input$expr) %>%
   rename(gene_name = X1)
 
+# do some cleaning
 design <- read_tsv(snakemake@input$design) %>%
-  mutate(tissue = gsub("Homo sapiens |Human","",tissue))
+  mutate(tissue = trimws(tolower(gsub("Homo sapiens |Human","",tissue))))
 
 # sanity check for sample ordering
 print("Order of samples in expr and design is the same:")
