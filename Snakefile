@@ -1,3 +1,5 @@
+configfile: "./config.json"
+
 # ------------------------------------------------------------------------------
 # Extract the  global sample design sheet from the h5 archive
 # ------------------------------------------------------------------------------
@@ -27,9 +29,9 @@ rule extract_data:
 		h5="results/human_matrix_download.h5",
 		samples="results/sample_definitions/{keywords}.R"
 	output:
-		expr="results/data/{keywords}/expression_matrix_norm_sva.tsv",
-		raw="results/data/{keywords}/expression_matrix_raw.tsv",
-		design="results/data/{keywords}/design.tsv"
+		expr=config["data_dir"] + "{keywords}/expression_matrix_norm_sva.tsv",
+		raw=config["data_dir"] + "{keywords}/expression_matrix_raw.tsv",
+		design=config["data_dir"] + "{keywords}/design.tsv"
 	log:
 		"logs/extract_data/{keywords}.log"
 	script:
@@ -40,10 +42,10 @@ rule extract_data:
 # ------------------------------------------------------------------------------
 rule explore_data:
 	input:
-		expr="results/data/{keywords}/expression_matrix_norm_sva.tsv",
-		design="results/data/{keywords}/design.tsv"
+		expr=config["data_dir"] + "{keywords}/expression_matrix_norm_sva.tsv",
+		design=config["data_dir"] + "{keywords}/design.tsv"
 	output:
-		"results/data/{keywords}/summary.html"
+		config["data_dir"] + "{keywords}/summary.html"
 	script:
 		"scripts/explore_data.Rmd"
 
@@ -52,9 +54,9 @@ rule explore_data:
 # ------------------------------------------------------------------------------
 rule explore_thyroid_blood_muscle:
 	input:
-		"results/data/Thyroid/summary.html",
-		"results/data/Whole_Blood/summary.html",
-		"results/data/Skeletal_Muscle/summary.html"
+		config["data_dir"] + "Thyroid/summary.html",
+		config["data_dir"] + "Whole_Blood/summary.html",
+		config["data_dir"] + "Skeletal_Muscle/summary.html"
 	output:
 		"results/summaries.zip"
 	shell:
