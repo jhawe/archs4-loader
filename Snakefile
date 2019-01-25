@@ -43,6 +43,7 @@ rule extract_data:
 rule explore_data:
 	input:
 		expr=config["data_dir"] + "{keywords}/expression_matrix_norm_sva.tsv",
+		raw=config["data_dir"] + "{keywords}/expression_matrix_raw.tsv",
 		design=config["data_dir"] + "{keywords}/design.tsv"
 	output:
 		config["data_dir"] + "{keywords}/summary.html"
