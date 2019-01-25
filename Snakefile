@@ -20,30 +20,30 @@ rule get_samples:
 		"scripts/get_samples.R"
 
 # ------------------------------------------------------------------------------
-# Download and process expression data for specific keywords
+# Extract and process expression data for specific keywords from main h5 file
 # ------------------------------------------------------------------------------
-rule download_samples:
+rule extract_data:
 	input:
 		h5="results/human_matrix_download.h5",
 		samples="results/sample_definitions/{keywords}.R"
 	output:
-		expr="results/downloads/{keywords}/expression_matrix_norm_sva.tsv",
-#		plot="results/downloads/{keywords}/expression_matrix_norm_sva.pdf",
-		design="results/downloads/{keywords}/design.tsv"
+		expr="results/data/{keywords}/expression_matrix_norm_sva.tsv",
+		raw="results/data/{keywords}/expression_matrix_raw.tsv",
+		design="results/data/{keywords}/design.tsv"
 	log:
-		"logs/download_samples_{keywords}.log"
+		"logs/extract_data/{keywords}.log"
 	script:
-		"scripts/download.R"
+		"scripts/extract_data.R"
 
 # ------------------------------------------------------------------------------
 # Explore the data and create a nice summary
 # ------------------------------------------------------------------------------
 rule explore_data:
 	input:
-		expr="results/downloads/{keywords}/expression_matrix_norm_sva.tsv",
-		design="results/downloads/{keywords}/design.tsv"
+		expr="results/data/{keywords}/expression_matrix_norm_sva.tsv",
+		design="results/data/{keywords}/design.tsv"
 	output:
-		"results/downloads/{keywords}/summary.html"
+		"results/data/{keywords}/summary.html"
 	script:
 		"scripts/explore_data.Rmd"
 
@@ -52,9 +52,9 @@ rule explore_data:
 # ------------------------------------------------------------------------------
 rule explore_thyroid_blood_muscle:
 	input:
-		"results/downloads/Thyroid/summary.html",
-		"results/downloads/Whole_Blood/summary.html",
-		"results/downloads/Skeletal_Muscle/summary.html"
+		"results/data/Thyroid/summary.html",
+		"results/data/Whole_Blood/summary.html",
+		"results/data/Skeletal_Muscle/summary.html"
 	output:
 		"results/summaries.zip"
 	shell:

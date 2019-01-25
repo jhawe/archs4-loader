@@ -51,6 +51,7 @@ fsamples = snakemake@input$samples
 fh5 = snakemake@input$h5
 
 # output
+fraw = snakemake@output$raw
 fexpr = snakemake@output$expr
 fplot = snakemake@output$plot
 fdesign = snakemake@output$design
@@ -112,6 +113,10 @@ write.table(file=fdesign, design, sep="\t",
 expression = h5read(fh5, "data/expression", 
                     index=list(1:length(genes), sample_locations))
 H5close()
+
+# write raw expression
+write.table(expression, file=fraw, sep="\t",
+            quote=FALSE, col.names=NA, row.names=T)
 
 # normalize samples and correct for differences in gene count distribution
 if(NORM | SVA | PEER){
