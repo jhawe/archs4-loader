@@ -114,9 +114,14 @@ expression = h5read(fh5, "data/expression",
                     index=list(1:length(genes), sample_locations))
 H5close()
 
+# set names
+rownames(expression) = genes
+colnames(expression) = samples[sample_locations]
+
 # write raw expression
 write.table(expression, file=fraw, sep="\t",
             quote=FALSE, col.names=NA, row.names=T)
+
 
 # normalize samples and correct for differences in gene count distribution
 if(NORM | SVA | PEER){
@@ -125,6 +130,7 @@ if(NORM | SVA | PEER){
   expression = normalize.quantiles(expression)
 }
 
+# reset names after norm.quant
 rownames(expression) = genes
 colnames(expression) = samples[sample_locations]
 
