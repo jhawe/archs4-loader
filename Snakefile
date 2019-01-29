@@ -1,37 +1,30 @@
 # ------------------------------------------------------------------------------
-# Extract the  global sample design sheet from the h5 archive
+# Download the data file and extract the  global sample design sheet
 # ------------------------------------------------------------------------------
-rule create_sample_sheet:
+rule init_data:
 	output:
 		"results/design_all_samples.tsv",
 		"results/human_matrix_download.h5"
+	conda:
+		"envs/r_env.yaml"
 	script:
 		"scripts/create_sample_sheet.R"
-
-# ------------------------------------------------------------------------------
-# Get samples which have specific keywords annotated in the tissue-metadata
-# ------------------------------------------------------------------------------
-rule get_samples:
-	input:
-		design="results/design_all_samples.tsv",
-	output:
-		"results/sample_definitions/{keywords}.R"
-	script:
-		"scripts/get_samples.R"
 
 # ------------------------------------------------------------------------------
 # Download and process expression data for specific keywords
 # ------------------------------------------------------------------------------
 rule download_samples:
 	input:
-		h5="results/human_matrix_download.h5",
-		samples="results/sample_definitions/{keywords}.R"
+		h5="results/human_matrix_download.h5"
 	output:
-		expr="results/downloads/{keywords}/expression_matrix_norm_sva.tsv",
-#		plot="results/downloads/{keywords}/expression_matrix_norm_sva.pdf",
+		expr="results/downloads/{keywords}/expression_normalized.tsv",
 		design="results/downloads/{keywords}/design.tsv"
 	log:
 		"logs/download_samples_{keywords}.log"
+	conda:
+		"envs/r_env.yaml"
+	params:
+		norm_method = "sva" # must be one of 'sva', 'peer' or 'quantile'
 	script:
 		"scripts/download.R"
 
@@ -40,9 +33,13 @@ rule download_samples:
 # ------------------------------------------------------------------------------
 rule explore_data:
 	input:
-		expr="results/downloads/{keywords}/expression_matrix_norm_sva.tsv",
+		expr="results/downloads/{keywords}/expression_normalized.tsv",
 		design="results/downloads/{keywords}/design.tsv"
 	output:
 		"results/downloads/{keywords}/summary.html"
+	conda:
+		"envs/r_env.yaml"
+	wildcard_constraints:
+		keywords = "^(?!all_samples)$"
 	script:
 		"scripts/explore_data.Rmd"

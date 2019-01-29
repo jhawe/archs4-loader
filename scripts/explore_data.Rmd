@@ -1,13 +1,12 @@
 ---
 title: "Exploration of ARCHS4 gene expression data"
-output: 
+output:
   html_document:
     fig_width: 10
-
 ---
 
 ```{r libraries}
-knitr::opts_chunk$set(echo = FALSE, fig.align="center", 
+knitr::opts_chunk$set(echo = FALSE, fig.align="center",
                       message = FALSE, warning=FALSE)
 library(tidyverse)
 library(ggplot2)
@@ -49,7 +48,7 @@ The design table contains the following column names:
 colnames(design)
 ```
 
-We now have a look at the individual columns, specifically what kind of values 
+We now have a look at the individual columns, specifically what kind of values
 we can find.
 Below we show for each column of the design matrix the unique values contained
 therein.
@@ -60,7 +59,7 @@ lapply(colnames(design), function(x) {
 })
 ```
 
-Let's also check how many samples we get if we group by the individual values 
+Let's also check how many samples we get if we group by the individual values
 for each of the columns:
 
 ```{r samples_by_groups}
@@ -68,8 +67,8 @@ for each of the columns:
 cols <- colnames(design)[-c(1,3,5)]
 
 lapply(cols, function(x) {
-  design %>% group_by_(.dots = as.symbol(x)) %>% 
-    summarize(count=n()) %>% 
+  design %>% group_by_(.dots = as.symbol(x)) %>%
+    summarize(count=n()) %>%
     arrange(desc(count))
 })
 
@@ -90,7 +89,7 @@ expr_subs <- filter(expr, gene_var > quantile(gene_var, .99))
 # histogram
 toplot <- expr %>% mutate(gene_var = NULL, gene_name = NULL) %>%
   melt
-ggplot(toplot, aes(x=value)) + geom_histogram() + xlab("expression") + 
+ggplot(toplot, aes(x=value)) + geom_histogram() + xlab("expression") +
   ggtitle("Distribution of expression values.")
 
 # heatmap
@@ -107,7 +106,7 @@ Now let's do some tSNE plots to see whether we can see any specific clusters eme
 expr_subs <- t(mutate(expr, gene_var = NULL, gene_name = NULL))
 
 # tsne
-reduction <- Rtsne(expr_subs, max_iter = 500, theta = 0.0, 
+reduction <- Rtsne(expr_subs, max_iter = 500, theta = 0.0,
                    dims = 2, perplexity = 30)
 
 # plotting
@@ -117,16 +116,16 @@ colnames(toplot) <- c("dim1", "dim2")
 toplot <- cbind(toplot, tissue = design$tissue, instrument = design$instrument,
                 series=design$series)
 
-ggplot(toplot, aes(x=dim1, y=dim2, col=tissue)) + 
-  geom_point() + 
+ggplot(toplot, aes(x=dim1, y=dim2, col=tissue)) +
+  geom_point() +
   ggtitle("t-SNE on gene expression data labeled \nby 'tissue' meta-data information")
 
-ggplot(toplot, aes(x=dim1, y=dim2, col=instrument)) + 
-  geom_point() + 
+ggplot(toplot, aes(x=dim1, y=dim2, col=instrument)) +
+  geom_point() +
   ggtitle("t-SNE on gene expression data labeled \nby 'instrument' meta-data information")
 
-ggplot(toplot, aes(x=dim1, y=dim2, col=series)) + 
-  geom_point() + 
+ggplot(toplot, aes(x=dim1, y=dim2, col=series)) +
+  geom_point() +
   ggtitle("t-SNE on gene expression data labeled \nby 'Series' meta-data information")
 
 ```

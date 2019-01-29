@@ -1,0 +1,11 @@
+channels:
+ - r
+ - bioconda
+
+dependencies:
+ - r=3.3.1
+ - r-tidyverse
+ - r-peer
+ - bioconductor-rhdf5
+ - bioconductor-sva
+ - bioconductor-preprocesscore
