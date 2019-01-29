@@ -73,12 +73,22 @@ for each of the columns:
 # we remove id, series and description
 cols <- colnames(design)[-c(1,3,5)]
 
-lapply(cols, function(x) {
+counts <- lapply(cols, function(x) {
   design %>% group_by_(.dots = as.symbol(x)) %>% 
     summarize(count=n()) %>% 
     arrange(desc(count))
 })
+names(counts) <- cols
 
+# get the tissue counts and match
+# with original design
+tissue_counts <- counts$tissue
+matched_counts <- tissue_counts[match(design$tissue, tissue_counts$tissue),]
+design <- rename(design, tissue_old = tissue) %>%
+  mutate(tissue = paste(matched_counts$tissue, " (", matched_counts$count, ")", sep=""))
+
+# report the tissue counts
+kable(counts$tissue)
 ```
 
 # Raw and batch normalized gene expression
@@ -125,9 +135,9 @@ expr_subs <- t(mutate(expr, gene_var = NULL, gene_name = NULL))
 raw_subs <- t(mutate(raw, gene_var = NULL, gene_name = NULL))
 
 # tsne
-reduction <- Rtsne(expr_subs, max_iter = 1000, theta = 0.0, 
+reduction <- Rtsne(expr_subs, check_duplicates=FALSE, max_iter = 1000, theta = 0.0, 
                    dims = 2, perplexity = 30)
-reduction_raw <- Rtsne(raw_subs, max_iter = 1000, theta = 0.0, 
+reduction_raw <- Rtsne(raw_subs, check_duplicates=FALSE, max_iter = 1000, theta = 0.0, 
                    dims = 2, perplexity = 30)
 
 # plotting
@@ -140,21 +150,31 @@ toplot <- mutate(toplot, type = c(rep("normalized", nrow(reduction$Y)),
 toplot <- cbind(toplot, tissue = design$tissue, instrument = design$instrument,
                 series=design$series)
 
-ggplot(toplot, aes(x=dim1, y=dim2, col=tissue)) + 
+gp1 <-ggplot(toplot, aes(x=dim1, y=dim2, col=tissue)) + 
   geom_point() + 
   facet_wrap(~type, nrow=2) +
   ggtitle("t-SNE on gene expression data labeled \nby 'tissue' meta-data information")
 
-ggplot(toplot, aes(x=dim1, y=dim2, col=instrument)) + 
+gp2 <- ggplot(toplot, aes(x=dim1, y=dim2, col=instrument)) + 
   geom_point() + 
   facet_wrap(~type, nrow=2) +
   ggtitle("t-SNE on gene expression data labeled \nby 'instrument' meta-data information")
 
-ggplot(toplot, aes(x=dim1, y=dim2, col=series)) + 
+gp3 <- ggplot(toplot, aes(x=dim1, y=dim2, col=series)) + 
   geom_point() + 
   facet_wrap(~type, nrow=2) +
   ggtitle("t-SNE on gene expression data labeled \nby 'Series' meta-data information")
 
+gp1
+gp2
+gp3
+
+# we also save these plots separtely to a pdf
+pdf(snakemake@params$pdf_out, width=15, height=10)
+gp1
+gp2
+gp3
+dev.off()
 ```
 
 

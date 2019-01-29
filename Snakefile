@@ -39,6 +39,7 @@ rule extract_data:
 
 # ------------------------------------------------------------------------------
 # Explore the data and create a nice summary
+# Note: only single output files can be used for R markdowns
 # ------------------------------------------------------------------------------
 rule explore_data:
 	input:
@@ -47,6 +48,8 @@ rule explore_data:
 		design=config["data_dir"] + "{keywords}/design.tsv"
 	output:
 		config["data_dir"] + "{keywords}/summary.html"
+	params:
+		pdf_out = config["data_dir"] + "{keywords}/tsne_plots.pdf"
 	script:
 		"scripts/explore_data.Rmd"
 
