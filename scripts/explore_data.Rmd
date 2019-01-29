@@ -6,7 +6,8 @@ output:
 ---
 
 ```{r libraries}
-knitr::opts_chunk$set(echo = FALSE, fig.align="center",
+# set options and load libraries
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", 
                       message = FALSE, warning=FALSE)
 library(tidyverse)
 library(ggplot2)
@@ -15,11 +16,16 @@ library(knitr)
 library(pheatmap)
 library(Rtsne)
 
+# read the expression data (raw and normalized
 expr <- read_tsv(snakemake@input$expr) %>%
   rename(gene_name = X1)
+raw <- read_tsv(snakemake@input$raw) %>%
+  rename(gene_name = X1)
 
+# load design and do some cleaning
+# NOTE: we only download the H. sapiens file
 design <- read_tsv(snakemake@input$design) %>%
-  mutate(tissue = gsub("Homo sapiens |Human","",tissue))
+  mutate(tissue = trimws(tolower(gsub("Homo sapiens |Human","",tissue))))
 
 # sanity check for sample ordering
 print("Order of samples in expr and design is the same:")
@@ -37,7 +43,7 @@ Let's check the expression and corresponding design tables:
 ```{r load_data}
 
 print("Expression:")
-kable(head(expr))
+kable(expr[1:5,1:10])
 
 print("Design:")
 kable(head(design))
@@ -51,7 +57,7 @@ colnames(design)
 We now have a look at the individual columns, specifically what kind of values
 we can find.
 Below we show for each column of the design matrix the unique values contained
-therein.
+therein. This is a bit messy, but for now we accept this.
 
 ```{r values_by_cols}
 lapply(colnames(design), function(x) {
@@ -74,7 +80,7 @@ lapply(cols, function(x) {
 
 ```
 
-# Gene expression
+# Raw and batch normalized gene expression
 
 Ok, now let's have a look at the actual gene expression data.
 We will have a look at the histogram of all expression values and a heatmap
@@ -86,46 +92,66 @@ expr_subs$gene_name <- NULL
 expr$gene_var <- apply(expr_subs,1,var)
 expr_subs <- filter(expr, gene_var > quantile(gene_var, .99))
 
+raw_subs <- raw
+raw_subs$gene_name <- NULL
+raw$gene_var <- apply(raw_subs,1,var)
+raw_subs <- filter(raw, gene_var > quantile(gene_var, .99))
+
 # histogram
 toplot <- expr %>% mutate(gene_var = NULL, gene_name = NULL) %>%
   melt
 ggplot(toplot, aes(x=value)) + geom_histogram() + xlab("expression") +
   ggtitle("Distribution of expression values.")
 
-# heatmap
+# heatmap raw
+raw_corr <- mutate(raw_subs, gene_var = NULL, gene_name = NULL) %>% t %>% cor
+pheatmap(raw_corr, main = "Correlation map of top 1% variable genes (raw).")
+
+# heatmap norm
 expr_corr <- mutate(expr_subs, gene_var = NULL, gene_name = NULL) %>% t %>% cor
-pheatmap(expr_corr, main = "Expression correlations of top 1% variable genes.")
+pheatmap(expr_corr, main = "Correlation map of top 1% variable genes (norm).")
 
 ```
 
 # t-SNE
 Now let's do some tSNE plots to see whether we can see any specific clusters emerging.
+Specifically, we will look at two types of t-SNE plots: One for the raw expression data as 
+was extracted from ARCHS4 and one using the batch normalized data.
 
 ```{r tsne}
 
 expr_subs <- t(mutate(expr, gene_var = NULL, gene_name = NULL))
+raw_subs <- t(mutate(raw, gene_var = NULL, gene_name = NULL))
 
 # tsne
-reduction <- Rtsne(expr_subs, max_iter = 500, theta = 0.0,
+reduction <- Rtsne(expr_subs, max_iter = 1000, theta = 0.0, 
+                   dims = 2, perplexity = 30)
+reduction_raw <- Rtsne(raw_subs, max_iter = 1000, theta = 0.0, 
                    dims = 2, perplexity = 30)
 
 # plotting
-toplot <- data.frame(reduction$Y)
+toplot <- data.frame(rbind(reduction$Y, reduction_raw$Y))
 colnames(toplot) <- c("dim1", "dim2")
+
+toplot <- mutate(toplot, type = c(rep("normalized", nrow(reduction$Y)),
+                                  rep("raw", nrow(reduction_raw$Y))))
 
 toplot <- cbind(toplot, tissue = design$tissue, instrument = design$instrument,
                 series=design$series)
 
-ggplot(toplot, aes(x=dim1, y=dim2, col=tissue)) +
-  geom_point() +
+ggplot(toplot, aes(x=dim1, y=dim2, col=tissue)) + 
+  geom_point() + 
+  facet_wrap(~type, nrow=2) +
   ggtitle("t-SNE on gene expression data labeled \nby 'tissue' meta-data information")
 
-ggplot(toplot, aes(x=dim1, y=dim2, col=instrument)) +
-  geom_point() +
+ggplot(toplot, aes(x=dim1, y=dim2, col=instrument)) + 
+  geom_point() + 
+  facet_wrap(~type, nrow=2) +
   ggtitle("t-SNE on gene expression data labeled \nby 'instrument' meta-data information")
 
-ggplot(toplot, aes(x=dim1, y=dim2, col=series)) +
-  geom_point() +
+ggplot(toplot, aes(x=dim1, y=dim2, col=series)) + 
+  geom_point() + 
+  facet_wrap(~type, nrow=2) +
   ggtitle("t-SNE on gene expression data labeled \nby 'Series' meta-data information")
 
 ```

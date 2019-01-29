@@ -7,7 +7,7 @@ Furthermore, simple diagnostic plots are created for the extracted data.
 
 # Snakemake workflow 
 ## Data download and processing
-We use a [Snakemake]() based approach to have access to a fully automated workflow.
+We use a [Snakemake](https://snakemake.readthedocs.io/) based approach to have access to a fully automated workflow.
 To only download the data, as well as perform batch effect removal, the pipeline can be called by executing the following line of code in the root directory of the project:
 
 ```{bash}

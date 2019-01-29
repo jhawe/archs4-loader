@@ -35,6 +35,7 @@ fsamples = snakemake@input$samples
 fh5 = snakemake@input$h5
 
 # output
+fraw = snakemake@output$raw
 fexpr = snakemake@output$expr
 fplot = snakemake@output$plot
 fdesign = snakemake@output$design
@@ -98,9 +99,17 @@ genes = h5read(fh5, "meta/genes")
 # ------------------------------------------------------------------------------
 
 # extract gene expression from compressed data
-expression = h5read(fh5, "data/expression",
+expression = h5read(fh5, "data/expression", 
                     index=list(1:length(genes), sample_locations))
 H5close()
+
+# set names
+rownames(expression) = genes
+colnames(expression) = samples[sample_locations]
+
+# write raw expression
+write.table(expression, file=fraw, sep="\t",
+            quote=FALSE, col.names=NA, row.names=T)
 
 # normalize samples and correct for differences in gene count distribution
 if(NORM | SVA | PEER){
@@ -109,6 +118,7 @@ if(NORM | SVA | PEER){
   expression = normalize.quantiles(expression)
 }
 
+# reset names after norm.quant
 rownames(expression) = genes
 colnames(expression) = samples[sample_locations]
 
@@ -117,10 +127,10 @@ if(SVA) {
   print("Removing batch effects using ComBat.")
   series = series[sample_locations]
   batchid = match(series, unique(series))
-  expression <- ComBat(dat=expression, batch=batchid,
+  expression <- ComBat(dat=expression, batch=batchid, 
                        par.prior=TRUE, prior.plots=FALSE)
 } else if(PEER) {
-  print("Removing batch effects using PEER.\nThis might take a while...")
+  print("Removing batch effects using PEER.")
   # transform the scaled counts to std normal per gene
   stdnorm <- function(x) {
     r = rank(x, ties.method="random")
