@@ -1,9 +1,8 @@
 ---
 title: "Exploration of ARCHS4 gene expression data"
-output: 
+output:
   html_document:
     fig_width: 10
-
 ---
 
 ```{r libraries}
@@ -53,9 +52,12 @@ kable(head(design))
 The design table contains the following column names:
 ```{r design_cols}
 colnames(design)
+
+# for now we quit here if we didnt get any data
+if(nrow(expr)<2) quit("no",0)
 ```
 
-We now have a look at the individual columns, specifically what kind of values 
+We now have a look at the individual columns, specifically what kind of values
 we can find.
 Below we show for each column of the design matrix the unique values contained
 therein. This is a bit messy, but for now we accept this.
@@ -66,7 +68,7 @@ lapply(colnames(design), function(x) {
 })
 ```
 
-Let's also check how many samples we get if we group by the individual values 
+Let's also check how many samples we get if we group by the individual values
 for each of the columns:
 
 ```{r samples_by_groups}
@@ -111,7 +113,7 @@ raw_subs <- filter(raw, gene_var > quantile(gene_var, .99))
 # histogram
 toplot <- expr %>% mutate(gene_var = NULL, gene_name = NULL) %>%
   melt
-ggplot(toplot, aes(x=value)) + geom_histogram() + xlab("expression") + 
+ggplot(toplot, aes(x=value)) + geom_histogram() + xlab("expression") +
   ggtitle("Distribution of expression values.")
 
 # heatmap raw

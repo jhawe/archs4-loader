@@ -1,0 +1,15 @@
+channels:
+ - r
+ - bioconda
+
+dependencies:
+ - r=3.3.1
+ - r-tidyverse
+ - r-peer
+ - r-rmarkdown
+ - r-knitr
+ - r-rtsne
+ - r-pheatmap
+ - bioconductor-rhdf5
+ - bioconductor-sva
+ - bioconductor-preprocesscore
