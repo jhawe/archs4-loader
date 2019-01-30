@@ -52,25 +52,13 @@ if("all_samples" %in% keywords) {
 }
 # normalization params
 norm_method <- snakemake@params$norm_method
-if("sva" %in% norm_method) {
-  SVA <- TRUE
-  PEER <- FALSE
-  NORM <- TRUE
-} else if("peer" %in% norm_method) {
-  PEER <- TRUE
-  SVA <- FALSE
-  NORM <- TRUE
-} else if("quantile" %in% norm_method) {
-  NORM <- TRUE
-  PEER <- FALSE
-  SVA <- FALSE
-} else {
+if(!norm_method %in% c("sva", "peer", "quantile")) {
   # not recognized
   stop(paste0("Sorry, chosen normalization method '", norm_method,
               "' not supported."))
 }
 
-if(PEER) {
+if(norm_method == "peer") {
   source("scripts/peer.R")
 }
 
@@ -106,7 +94,7 @@ genes = h5read(fh5, "meta/genes")
 # ------------------------------------------------------------------------------
 
 # extract gene expression from compressed data
-expression = h5read(fh5, "data/expression", 
+expression = h5read(fh5, "data/expression",
                     index=list(1:length(genes), sample_locations))
 H5close()
 
@@ -118,43 +106,8 @@ colnames(expression) = design$sample[sample_locations]
 write.table(expression, file=fraw, sep="\t",
             quote=FALSE, col.names=NA, row.names=T)
 
-# normalize samples and correct for differences in gene count distribution
-if(NORM | SVA | PEER){
-  print("Normalizing data.")
-  expression = log2(expression+1)
-  expression = normalize.quantiles(expression)
-}
+expression_processed <- process_expression(expression, norm_method)
 
-# reset names after norm.quant
-rownames(expression) = genes
-colnames(expression) = design$sample[sample_locations]
-
-# correct batch effects in gene expression
-# if we got some data...
-if(ncol(expression) > 10) {
-
-  if(SVA) {
-    print("Removing batch effects using ComBat.")
-    series = design$series[sample_locations]
-    batchid = match(series, unique(series))
-    expression <- ComBat(dat=expression, batch=batchid, 
-                         par.prior=TRUE, prior.plots=FALSE)
-  } else if(PEER) {
-    print("Removing batch effects using PEER.")
-    # transform the scaled counts to std normal per gene
-    stdnorm <- function(x) {
-      r = rank(x, ties.method="random")
-      qnorm(r / (length(x) + 1))
-    }
-    transformed = apply(expression, 1, stdnorm)
-
-    # peer expects an NxG matrix (N=#samples)
-    # we use Nk=10 as in the lappaleinen et al. 2013 paper
-    expression <- t(correct_peer(data=transformed, Nk=10))
-    print("Done.")
-  }
-
-}
 # ------------------------------------------------------------------------------
 # Save file
 # ------------------------------------------------------------------------------

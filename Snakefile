@@ -60,10 +60,22 @@ def gtex_tissue_files(wc):
 	tissues = [x.strip() for x in tissues]
 	return(expand(config["data_dir"] + "{keywords}/summary.html", keywords=tissues))
 
-rule explore_gtex:
+rule get_gtex_tissue_summaries:
 	input:
 		gtex_tissue_files
 	output:
 		"results/summaries.zip"
 	shell:
 		"zip {output[0]} {input}"
+
+rule explore_gtex:
+	input:
+		tissues="gtex_tissues.txt",
+		h5="results/human_matrix_download.h5"
+	output:
+		expr=config["data_dir"] + "all_gtex/expresion_normalized.tsv",
+		raw=config["data_dir"] + "all_gtex/expresion_raw.tsv",
+		design=config["data_dir"] + "all_gtex/design.tsv",
+		plot="gtex_exploration.pdf"
+	script:
+		"scripts/explore_gtex.R"

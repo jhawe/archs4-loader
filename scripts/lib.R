@@ -62,3 +62,47 @@ get_samples_from_design <- function(design, keywords=NULL) {
   samples <- design[use,]$sample
   return(samples)
 }
+
+process_expression <- function(expression, norm_method) {
+
+  # save colnames for resetting
+  cnames <- colnames(expression)
+  rnames <- rownames(expression)
+
+  # normalize samples and correct for differences in gene count distribution
+  print("Normalizing data.")
+  expression = log2(expression+1)
+  expression = normalize.quantiles(expression)
+
+  # reset names after norm.quant
+  rownames(expression) = rnames
+  colnames(expression) = cnames
+
+  # correct batch effects in gene expression
+  # if we got some data...
+  if(ncol(expression) > 10) {
+
+    if(norm_method == "sva") {
+      print("Removing batch effects using ComBat.")
+      series = design$series[sample_locations]
+      batchid = match(series, unique(series))
+      expression <- ComBat(dat=expression, batch=batchid,
+                           par.prior=TRUE, prior.plots=FALSE)
+    } else if(norm_method == "peer") {
+      print("Removing batch effects using PEER.")
+      # transform the scaled counts to std normal per gene
+      stdnorm <- function(x) {
+        r = rank(x, ties.method="random")
+        qnorm(r / (length(x) + 1))
+      }
+      transformed = apply(expression, 1, stdnorm)
+
+      # peer expects an NxG matrix (N=#samples)
+      # we use Nk=10 as in the lappaleinen et al. 2013 paper
+      expression <- t(correct_peer(data=transformed, Nk=10))
+      print("Done.")
+    }
+
+  }
+ return(expression)
+}
