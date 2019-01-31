@@ -77,5 +77,9 @@ rule explore_gtex:
 		raw=config["data_dir"] + "all_gtex/expresion_raw.tsv",
 		design=config["data_dir"] + "all_gtex/design.tsv",
 		plot="gtex_exploration.pdf"
+	params:
+		norm_method = "sva"
+	log:
+		"logs/explore_gtex.log"
 	script:
 		"scripts/explore_gtex.R"

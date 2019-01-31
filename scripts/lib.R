@@ -70,7 +70,6 @@ process_expression <- function(expression, norm_method) {
   rnames <- rownames(expression)
 
   # normalize samples and correct for differences in gene count distribution
-  print("Normalizing data.")
   expression = log2(expression+1)
   expression = normalize.quantiles(expression)
 

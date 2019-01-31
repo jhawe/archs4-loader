@@ -19,8 +19,9 @@ sink(log, type="message")
 library(rhdf5)
 library(preprocessCore)
 library(sva)
-library(ggplot2)
+library(tidyverse)
 library(reshape2)
+library(Rtsne)
 
 # get helper methods
 source("scripts/lib.R")
@@ -31,7 +32,7 @@ source("scripts/lib.R")
 
 # input
 fh5 = snakemake@input$h5
-ftissues = snakemake@tissues
+ftissues = snakemake@input$tissues
 tissues <- read.table(ftissues, header=F, stringsAsFactors=F)[,1]
 
 # output
@@ -62,13 +63,18 @@ selected_samples <- c()
 for(tissue in tissues) {
   tis <- strsplit(tissue, "_")[[1]]
   samp <- get_samples_from_design(design, tis)
-  names(samp) <- tissue
+  names(samp) <- rep(tissue, length(samp))
   selected_samples <- c(selected_samples, samp)
 }
+
+# we filter out some ambiguous samples
+dups <- selected_samples[duplicated(selected_samples)]
+selected_samples <- sort(selected_samples[!selected_samples %in% dups])
 print(paste0("Found ", length(selected_samples), " samples."))
 
 # write subsetted design file
-design_subset <- dplyr::filter(design, sample %in% selected_samples) %>%
+design_subset <- dplyr::filter(design, sample %in% selected_samples) %>% 
+  arrange(sample) %>%
   dplyr::mutate(gtex_tissue = names(selected_samples))
 
 write.table(file=fdesign, design_subset, sep="\t", quote=T, col.names=T, row.names=F)
@@ -95,28 +101,36 @@ colnames(expression) = design$sample[sample_locations]
 write.table(expression, file=fraw, sep="\t",
             quote=FALSE, col.names=NA, row.names=T)
 
+print("Normalizing expression data.")
 expression_processed <- process_expression(expression, norm_method)
+write.table(expression_processed, file=fexpr, sep="\t",
+            quote=FALSE, col.names=NA, row.names=T)
 
 # directly perform tSNE and save the plot
 # ensure column sort
-raw <- dplyr::select(raw, one_of(design_subset$sample))
+raw <- expression[,design_subset$sample]
 
 reduction <- Rtsne(raw, check_duplicates=FALSE, max_iter = 1000, theta = 0.0,
-                   dims = 2, perplexity = perp)
+                   dims = 2, perplexity = 30)
 
 # plotting
 toplot <- reduction$Y
 colnames(toplot) <- c("dim1", "dim2")
 
+# get number of samples with respective gtex_tissues
+# and create new annotation for plotting
+counts <- table(design_subset$gtex_tissue)
+gtex_tissues_wcounts <- paste(design_subset$gtex_tissue, " (", 
+                              counts[design_subset$gtex_tissue], ")",
+                              sep="")
 toplot <- cbind(toplot, tissue = design_subset$tissue,
                 instrument = design_subset$instrument,
                 series=design_subset$series,
-                gtex_tissue = design_subset$gtex_tissue)
-
-gp1 <-ggplot(toplot, aes(x=dim1, y=dim2, col=tissue)) +
+                gtex_tissue2 = design_subset$gtex_tissue,
+                gtex_tissue = gtex_tissues_wcounts)
+gp1 <-ggplot(toplot, aes(x=dim1, y=dim2, col=gtex_tissue)) +
   geom_point() +
-  facet_wrap(~type, nrow=2) +
-  ggtitle("t-SNE on gene expression data labeled \nby 'tissue' meta-data information")
+  ggtitle("t-SNE on raw gene expression data labeled \nby gtex_tissue information")
 
 pdf(fplot)
 gp1
@@ -125,8 +139,6 @@ dev.off()
 # ------------------------------------------------------------------------------
 # Save file
 # ------------------------------------------------------------------------------
-write.table(expression_processed, file=fexpr, sep="\t",
-            quote=FALSE, col.names=NA, row.names=T)
 
 # ------------------------------------------------------------------------------
 # Session info

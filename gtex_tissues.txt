@@ -6,7 +6,6 @@ Testis
 Lung
 Muscle_Skeletal
 Liver
-Skeletal_Muscle
 Prostate
 Pancreas
 Stomach
