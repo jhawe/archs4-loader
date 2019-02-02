@@ -42,6 +42,7 @@ fplot = snakemake@output$plot
 fdesign = snakemake@output$design
 
 # params
+threads <- snakemake@threads
 norm_method <- snakemake@params$norm_method
 if(!norm_method %in% c("sva", "peer", "quantile")) {
   # not recognized
@@ -108,10 +109,11 @@ write.table(expression_processed, file=fexpr, sep="\t",
 
 # directly perform tSNE and save the plot
 # ensure column sort
-raw <- expression[,design_subset$sample]
+raw <- t(expression[,design_subset$sample])
+#norm<- t(expression_processed[,design_subset$sample])
 
 reduction <- Rtsne(raw, check_duplicates=FALSE, max_iter = 1000, theta = 0.0,
-                   dims = 2, perplexity = 30)
+                   dims = 2, perplexity = 30, num_threads=threads)
 
 # plotting
 toplot <- reduction$Y
@@ -123,16 +125,18 @@ counts <- table(design_subset$gtex_tissue)
 gtex_tissues_wcounts <- paste(design_subset$gtex_tissue, " (", 
                               counts[design_subset$gtex_tissue], ")",
                               sep="")
-toplot <- cbind(toplot, tissue = design_subset$tissue,
+toplot <- cbind.data.frame(toplot, tissue = design_subset$tissue,
                 instrument = design_subset$instrument,
                 series=design_subset$series,
                 gtex_tissue2 = design_subset$gtex_tissue,
-                gtex_tissue = gtex_tissues_wcounts)
+                gtex_tissue = gtex_tissues_wcounts,
+                stringsAsFactors=F)
+
 gp1 <-ggplot(toplot, aes(x=dim1, y=dim2, col=gtex_tissue)) +
   geom_point() +
   ggtitle("t-SNE on raw gene expression data labeled \nby gtex_tissue information")
 
-pdf(fplot)
+pdf(fplot, width=15, height=12)
 gp1
 dev.off()
 
