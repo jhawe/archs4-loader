@@ -39,7 +39,12 @@ rule extract_data:
 # We use this to be able to define certain subsets of samples for further 
 # processing, e.g. based on intitial fuzzy matching results
 # ------------------------------------------------------------------------------
-tissue_to_keyword = {"pancreas":"pancreas|human pancreas"}
+tissue_to_keyword = {"pancreas":"pancreas|human pancreas",
+  "liver":"Human liver tissue|liver biopsy|Liver|normal liver|Normal liver|normal liver tissue|liver tissue|liver",
+  "whole_blood":"Whole Blood|whole blood|Whole blood|whole peripheral blood|whole blood cells|peripheral whole blood",
+  "lung":"lung"}
+
+
 rule extract_data_exact:
 	input:
 		h5="results/human_matrix_download.h5"

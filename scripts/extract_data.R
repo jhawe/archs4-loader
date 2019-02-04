@@ -69,6 +69,9 @@ if(norm_method == "peer") {
 
 # get samples
 design <- load_design(fh5)
+# make some adjustments to the tissue column
+design$tissue <- trimws(design$tissue)
+
 selected_samples <- get_samples_from_design(design, keywords)
 print(paste0("Found ", length(selected_samples), " samples."))
 

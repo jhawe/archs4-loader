@@ -70,7 +70,12 @@ get_samples_from_design <- function(design, keywords=NULL, exact=FALSE) {
   }
 
   # we also filter out any samples which could be 'cancerous'
-  use <- use & !grepl("cancer|carcino|adenom", design$tissue, ignore.case=T)
+  use <- use & !grepl("cancer|carcino|adenom|blastom|tumour|tumor|sarcom", 
+                       design$tissue, ignore.case=T)
+  use <- use & !grepl("cancer|carcino|adenom|blastom|tumour|tumor|sarcom", 
+                       design$description, ignore.case=T)
+  use <- use & !grepl("cancer|carcino|adenom|blastom|tumour|tumor|sarcom", 
+                       design$characteristics, ignore.case=T)
   samples <- design[use,]$sample
   return(samples)
 }
