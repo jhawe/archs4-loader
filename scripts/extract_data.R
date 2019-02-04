@@ -25,6 +25,7 @@ library(reshape2)
 
 # get helper methods
 source("scripts/lib.R")
+source("scripts/plotting.R")
 
 # ------------------------------------------------------------------------------
 # Get snakemake params
@@ -113,6 +114,12 @@ print("Saving normalized expression data.")
 # ------------------------------------------------------------------------------
 write.table(expression_processed, file=fexpr, sep="\t",
             quote=FALSE, col.names=NA, row.names=T)
+
+# ensure column sort and transpose
+raw <- t(expression[,design_subset$sample])
+norm<- t(expression_processed[,design_subset$sample])
+
+create_tsne(raw, norm, design_subset$tissue, fplot)
 
 # ------------------------------------------------------------------------------
 # Session info

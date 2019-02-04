@@ -56,23 +56,34 @@ get_samples_from_design <- function(design, keywords=NULL, exact=FALSE) {
   for(k in keywords){
     if(is.null(use)){
       if(exact) {
-        use <- grepl(paste0("^", k, "$"), design$tissue, ignore.case=T)
+        use <- grepl(paste0("^", k, "$"), design$tissue, ignore.case=F)
       } else {
         use <- grepl(k, design$tissue, ignore.case=T)
       }
     } else {
       if(exact) {
-        use <- use |  grepl(paste0("^", k, "$"), design$tissue, ignore.case=T)
+        use <- use |  grepl(paste0("^", k, "$"), design$tissue, ignore.case=F)
       } else {
         use <- use & grepl(k, design$tissue, ignore.case=T)
       }
     }
   }
 
+  # we also filter out any samples which could be 'cancerous'
+  use <- use & !grepl("cancer|carcino|adenom", design$tissue, ignore.case=T)
   samples <- design[use,]$sample
   return(samples)
 }
 
+# ------------------------------------------------------------------------------
+#' Process the raw expression data
+#'
+#' @param The expression matrix containing the raw counts
+#' @param The normalization method to be applied. One of "quantile", "sva" or
+#' "peer"
+#'
+#' @author Johann Hawe <johann.hawe@helmholtz-muenchen.de>
+# ------------------------------------------------------------------------------
 process_expression <- function(expression, norm_method) {
 
   # save colnames for resetting
@@ -114,4 +125,49 @@ process_expression <- function(expression, norm_method) {
 
   }
  return(expression)
+}
+
+
+# ------------------------------------------------------------------------------
+#' Creates and saves t-SNE plot for raw and normalized expression matrices.
+#'
+#' @param raw The raw gene counts
+#' @param norm The normalized gene expression matrix
+#' @param tissues Tissue annotation for all samples in the matrices
+#' @param fplot File to which to save the t-SNE plots
+#'
+#' @author Johann Hawe <johann.hawe@helmholtz-muenchen.de>
+# ------------------------------------------------------------------------------
+create_tsne <- function(raw, norm, tissues, fplot) {
+  
+  require(Rtsne)
+
+  perp <- 30
+  max_perp <- (nrow(raw) -1) / 3
+  if(max_perp < perp){
+    perp <- max_perp
+    print(paste0("Using adjusted perplexity parameter: ", perp))
+  }
+
+  reduction <- Rtsne(raw, check_duplicates=FALSE, max_iter = 1000, theta = 0.0,
+                     dims = 2, perplexity = perp)
+  reduction2 <- Rtsne(norm, check_duplicates=FALSE, max_iter = 1000, theta = 0.0,
+                     dims = 2, perplexity = perp)
+
+  # get number of samples with respective gtex_tissues
+  # and create new annotation for plotting
+  counts <- table(tissues)
+  tissues_wcounts <- paste(tissues, " (",
+                           counts[tissues], ")",
+                           sep="")
+
+  pdf(fplot, width=15, height=12)
+  y <- reduction$Y
+  plot_tsne(y[,1], y[,2], tissues_wcounts,
+            "t-SNE on raw gene counts labeled \nby tissue information")
+  y <- reduction2$Y
+  plot_tsne(y[,1], y[,2], tissues_wcounts,
+            "t-SNE on normalized expression data labeled \nby tissue information")
+  dev.off()
+
 }

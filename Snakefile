@@ -21,13 +21,12 @@ rule extract_data:
 	output:
 		expr=config["data_dir"] + "{keywords}/expression_normalized.tsv",
 		raw=config["data_dir"] + "{keywords}/expression_raw.tsv",
-		design=config["data_dir"] + "{keywords}/design.tsv"
-	log:
-		"logs/extract_data_{keywords}.log"
+		design=config["data_dir"] + "{keywords}/design.tsv",
+		plot=config["data_dir"] + "{keywords}/tsne.pdf"
 	conda:
 		"envs/r_env.yaml"
 	wildcard_constraints:
-		keywords="[a-zA-Z_]"
+		keywords="[a-zA-Z_]+"
 	params:
 		norm_method = "sva" # must be one of 'sva', 'peer' or 'quantile'
 	log:
@@ -52,7 +51,7 @@ rule extract_data_exact:
 	conda:
 		"envs/r_env.yaml"
 	wildcard_constraints:
-		keywords="[a-zA-Z_]"
+		keywords="[a-zA-Z_]+"
 	params:
 		keywords=lambda wildcards: tissue_to_keyword[wildcards.tissue]
 	log:

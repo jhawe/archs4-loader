@@ -111,28 +111,7 @@ print("Creating tSNE and plotting.")
 raw <- t(expression[,design_subset$sample])
 norm<- t(expression_processed[,design_subset$sample])
 
-reduction <- Rtsne(raw, check_duplicates=FALSE, max_iter = 1000, theta = 0.0,
-                   dims = 2, perplexity = 30)
-reduction2 <- Rtsne(norm, check_duplicates=FALSE, max_iter = 1000, theta = 0.0,
-                   dims = 2, perplexity = 30)
-
-# get number of samples with respective gtex_tissues
-# and create new annotation for plotting
-counts <- table(design_subset$tissue)
-tissues_wcounts <- paste(design_subset$tissue, " (",
-                         counts[design_subset$tissue], ")",
-                         sep="")
-
-  ggtitle("t-SNE on raw gene expression data labeled \nby gtex_tissue information")
-
-pdf(fplot, width=15, height=12)
-y <- reduction$Y
-plot_tsne(y[,1], y[,2], tissues_wcounts, 
-          "t-SNE on raw gene counts labeled \nby tissue information")
-y <- reduction2$Y
-plot_tsne(y[,1], y[,2], tissues_wcounts, 
-          "t-SNE on normalized expression data labeled \nby tissue information")
-dev.off()
+create_tsne(raw, norm, design_subset$tissue, fplot)
 
 # ------------------------------------------------------------------------------
 # Session info
