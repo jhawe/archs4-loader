@@ -26,12 +26,39 @@ rule extract_data:
 		"logs/extract_data_{keywords}.log"
 	conda:
 		"envs/r_env.yaml"
+	wildcard_constraints:
+		keywords="[a-zA-Z_]"
 	params:
 		norm_method = "sva" # must be one of 'sva', 'peer' or 'quantile'
 	log:
 		"logs/extract_data/{keywords}.log"
 	script:
 		"scripts/extract_data.R"
+
+# ------------------------------------------------------------------------------
+# Extract data from ARCHS4 with exact keyword matching
+# We use this to be able to define certain subsets of samples for further 
+# processing, e.g. based on intitial fuzzy matching results
+# ------------------------------------------------------------------------------
+tissue_to_keyword = {"pancreas":"pancreas|human pancreas"}
+rule extract_data_exact:
+	input:
+		h5="results/human_matrix_download.h5"
+	output:
+		expr=config["data_dir"] + "exact/{tissue}/expression_normalized.tsv",
+		raw=config["data_dir"] + "exact/{tissue}/expression_raw.tsv",
+		design=config["data_dir"] + "exact/{tissue}/design.tsv",
+		plot=config["data_dir"] + "exact/{tissue}/tsne.pdf"
+	conda:
+		"envs/r_env.yaml"
+	wildcard_constraints:
+		keywords="[a-zA-Z_]"
+	params:
+		keywords=lambda wildcards: tissue_to_keyword[wildcards.tissue]
+	log:
+		"logs/extract_data_exact/{tissue}.log"
+	script:
+		"scripts/extract_data_exact.R"
 
 # ------------------------------------------------------------------------------
 # Explore the data and create a nice summary

@@ -33,15 +33,17 @@ load_design <- function(fh5, samp=NULL) {
 # ------------------------------------------------------------------------------
 #' Helper to get all samples in design which match the provided keywords
 #'
-#' NOTE: Currently the keywords are combined using '&'
-#'
 #' @param design The path to the h5 file from which to get the data
 #' @param keywords Vector of keywords to be matched. Can be 'NULL', in which
 #' case all samples available in design will be returned. Default: NULL
+#' @param exact Whether to exactly match the provided keywords or simply grep 
+#' for them in the tissue anntotation of the design table. In the former case,
+#' keyword results are combined with 'or', in the latter with 'and'.
+#' Default: FALSE
 #'
 #' @author Johann Hawe <johann.hawe@helmholtz-muenchen.de>
 # ------------------------------------------------------------------------------
-get_samples_from_design <- function(design, keywords=NULL) {
+get_samples_from_design <- function(design, keywords=NULL, exact=FALSE) {
 
   # simply return all samples
   if(is.null(keywords)) {
@@ -53,9 +55,17 @@ get_samples_from_design <- function(design, keywords=NULL) {
   use <- NULL
   for(k in keywords){
     if(is.null(use)){
-      use <- grepl(k, design$tissue, ignore.case=T)
+      if(exact) {
+        use <- grepl(paste0("^", k, "$"), design$tissue, ignore.case=T)
+      } else {
+        use <- grepl(k, design$tissue, ignore.case=T)
+      }
     } else {
-      use <- use & grepl(k, design$tissue, ignore.case=T)
+      if(exact) {
+        use <- use |  grepl(paste0("^", k, "$"), design$tissue, ignore.case=T)
+      } else {
+        use <- use & grepl(k, design$tissue, ignore.case=T)
+      }
     }
   }
 

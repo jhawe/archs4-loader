@@ -6,6 +6,11 @@
 #' archive and normalize it if necessary. Additionally we create
 #' some basic diagnostic plots on the data.
 #'
+#' This script differs from the 'extract_data.R' script in that it expacts
+#' keywords to be passed via the snakemake parameters and all these keywords
+#' are matched exactly (rather than simply grepped) in the tissue meta data 
+#' annotation.
+#'
 #' @author Johann Hawe
 #'
 # ------------------------------------------------------------------------------
@@ -22,9 +27,11 @@ library(preprocessCore)
 library(sva)
 library(ggplot2)
 library(reshape2)
+library(Rtsne)
 
 # get helper methods
 source("scripts/lib.R")
+source("scripts/plotting.R")
 
 # ------------------------------------------------------------------------------
 # Get snakemake params
@@ -40,27 +47,9 @@ fplot = snakemake@output$plot
 fdesign = snakemake@output$design
 
 # params
-keywords <- snakemake@wildcards$keywords
-
-# check for special keyword
-if("all_samples" %in% keywords) {
-  # will skip the subsetting later
-  keywords <- NULL
-} else {
-  # we expect "_" to be the word separator
-  keywords <- strsplit(keywords, "_")[[1]]
-}
-# normalization params
-norm_method <- snakemake@params$norm_method
-if(!norm_method %in% c("sva", "peer", "quantile")) {
-  # not recognized
-  stop(paste0("Sorry, chosen normalization method '", norm_method,
-              "' not supported."))
-}
-
-if(norm_method == "peer") {
-  source("scripts/peer.R")
-}
+keywords <- snakemake@params$keywords
+# we expect "_" to be the word separator
+keywords <- strsplit(keywords, "\\|")[[1]]
 
 # ------------------------------------------------------------------------------
 # Prepare data
@@ -68,7 +57,7 @@ if(norm_method == "peer") {
 
 # get samples
 design <- load_design(fh5)
-selected_samples <- get_samples_from_design(design, keywords)
+selected_samples <- get_samples_from_design(design, keywords, exact=T)
 print(paste0("Found ", length(selected_samples), " samples."))
 
 # fail gracefully
@@ -106,13 +95,44 @@ colnames(expression) = design$sample[sample_locations]
 write.table(expression, file=fraw, sep="\t",
             quote=FALSE, col.names=NA, row.names=T)
 
-expression_processed <- process_expression(expression, norm_method)
+expression_processed <- process_expression(expression, "sva")
 
 # ------------------------------------------------------------------------------
-print("Saving normalized expression data.")
+print("Saving expression data.")
 # ------------------------------------------------------------------------------
 write.table(expression_processed, file=fexpr, sep="\t",
             quote=FALSE, col.names=NA, row.names=T)
+
+# ------------------------------------------------------------------------------
+print("Creating tSNE and plotting.")
+# ------------------------------------------------------------------------------
+
+# ensure column sort
+raw <- t(expression[,design_subset$sample])
+norm<- t(expression_processed[,design_subset$sample])
+
+reduction <- Rtsne(raw, check_duplicates=FALSE, max_iter = 1000, theta = 0.0,
+                   dims = 2, perplexity = 30)
+reduction2 <- Rtsne(norm, check_duplicates=FALSE, max_iter = 1000, theta = 0.0,
+                   dims = 2, perplexity = 30)
+
+# get number of samples with respective gtex_tissues
+# and create new annotation for plotting
+counts <- table(design_subset$tissue)
+tissues_wcounts <- paste(design_subset$tissue, " (",
+                         counts[design_subset$tissue], ")",
+                         sep="")
+
+  ggtitle("t-SNE on raw gene expression data labeled \nby gtex_tissue information")
+
+pdf(fplot, width=15, height=12)
+y <- reduction$Y
+plot_tsne(y[,1], y[,2], tissues_wcounts, 
+          "t-SNE on raw gene counts labeled \nby tissue information")
+y <- reduction2$Y
+plot_tsne(y[,1], y[,2], tissues_wcounts, 
+          "t-SNE on normalized expression data labeled \nby tissue information")
+dev.off()
 
 # ------------------------------------------------------------------------------
 # Session info
