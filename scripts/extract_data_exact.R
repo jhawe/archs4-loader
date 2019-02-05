@@ -47,6 +47,8 @@ fplot = snakemake@output$plot
 fdesign = snakemake@output$design
 
 # params
+filter_cancer <- as.logical(snakemake@params$filter_cancer)
+print(paste0("Trying to remove cancer samples: ", filter_cancer))
 keywords <- snakemake@params$keywords
 # we expect "_" to be the word separator
 keywords <- strsplit(keywords, "\\|")[[1]]
@@ -57,7 +59,8 @@ keywords <- strsplit(keywords, "\\|")[[1]]
 
 # get samples
 design <- load_design(fh5)
-selected_samples <- get_samples_from_design(design, keywords, exact=T)
+selected_samples <- get_samples_from_design(design, keywords, exact=T,
+                                            filter_cancer=filter_cancer)
 print(paste0("Found ", length(selected_samples), " samples."))
 
 # fail gracefully

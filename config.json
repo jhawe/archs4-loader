@@ -1,3 +1,4 @@
 {
-	"data_dir" : "results/data/"
+	"data_dir" : "results/data/",
+	"filter_cancer" : "True"
 }

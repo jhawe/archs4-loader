@@ -40,10 +40,13 @@ load_design <- function(fh5, samp=NULL) {
 #' for them in the tissue anntotation of the design table. In the former case,
 #' keyword results are combined with 'or', in the latter with 'and'.
 #' Default: FALSE
+#' @param filter_cancer Try to filter out cancer indicated samples? 
+#' Default: FALSE
 #'
 #' @author Johann Hawe <johann.hawe@helmholtz-muenchen.de>
 # ------------------------------------------------------------------------------
-get_samples_from_design <- function(design, keywords=NULL, exact=FALSE) {
+get_samples_from_design <- function(design, keywords=NULL, exact=FALSE,
+                                    filter_cancer=FALSE) {
 
   # simply return all samples
   if(is.null(keywords)) {
@@ -69,13 +72,15 @@ get_samples_from_design <- function(design, keywords=NULL, exact=FALSE) {
     }
   }
 
-  # we also filter out any samples which could be 'cancerous'
-  use <- use & !grepl("cancer|carcino|adenom|blastom|tumour|tumor|sarcom", 
-                       design$tissue, ignore.case=T)
-  use <- use & !grepl("cancer|carcino|adenom|blastom|tumour|tumor|sarcom", 
-                       design$description, ignore.case=T)
-  use <- use & !grepl("cancer|carcino|adenom|blastom|tumour|tumor|sarcom", 
-                       design$characteristics, ignore.case=T)
+  if(filter_cancer) {
+    # try to filter out any samples which could be 'cancerous'
+    use <- use & !grepl("cancer|carcino|adenom|blastom|tumour|tumor|sarcom", 
+                         design$tissue, ignore.case=T)
+    use <- use & !grepl("cancer|carcino|adenom|blastom|tumour|tumor|sarcom", 
+                         design$description, ignore.case=T)
+    use <- use & !grepl("cancer|carcino|adenom|blastom|tumour|tumor|sarcom", 
+                         design$characteristics, ignore.case=T)
+  }
   samples <- design[use,]$sample
   return(samples)
 }
@@ -166,13 +171,19 @@ create_tsne <- function(raw, norm, tissues, fplot) {
                            counts[tissues], ")",
                            sep="")
 
+
   pdf(fplot, width=15, height=12)
-  y <- reduction$Y
-  plot_tsne(y[,1], y[,2], tissues_wcounts,
-            "t-SNE on raw gene counts labeled \nby tissue information")
-  y <- reduction2$Y
-  plot_tsne(y[,1], y[,2], tissues_wcounts,
-            "t-SNE on normalized expression data labeled \nby tissue information")
+
+  toplot <- cbind.data.frame(reduction$Y, tissues_wcounts)
+  colnames(toplot) <- c("dim1", "dim2", "label")
+  plot_tsne(df=toplot,
+            title="t-SNE on raw gene counts labeled \nby tissue information")
+
+  toplot <- cbind.data.frame(reduction2$Y, tissues_wcounts)
+  colnames(toplot) <- c("dim1", "dim2", "label")
+  plot_tsne(df=toplot,
+            title="t-SNE on normalized expression data labeled \nby tissue information")
+
   dev.off()
 
 }

@@ -1,5 +1,12 @@
 configfile: "./config.json"
 
+# define subdir depending on cancer status
+
+if(config["filter_cancer"] == "True"):
+  DRESULTS = config["data_dir"] + "cancer_filtered/"
+else:
+  DRESULTS = config["data_dir"]
+
 # ------------------------------------------------------------------------------
 # Download the data file and extract the  global sample design sheet
 # ------------------------------------------------------------------------------
@@ -19,16 +26,17 @@ rule extract_data:
 	input:
 		h5="results/human_matrix_download.h5"
 	output:
-		expr=config["data_dir"] + "{keywords}/expression_normalized.tsv",
-		raw=config["data_dir"] + "{keywords}/expression_raw.tsv",
-		design=config["data_dir"] + "{keywords}/design.tsv",
-		plot=config["data_dir"] + "{keywords}/tsne.pdf"
+		expr=DRESULTS + "{keywords}/expression_normalized.tsv",
+		raw=DRESULTS + "{keywords}/expression_raw.tsv",
+		design=DRESULTS + "{keywords}/design.tsv",
+		plot=DRESULTS + "{keywords}/tsne.pdf"
 	conda:
 		"envs/r_env.yaml"
 	wildcard_constraints:
 		keywords="[a-zA-Z_]+"
 	params:
-		norm_method = "sva" # must be one of 'sva', 'peer' or 'quantile'
+		norm_method = "sva", # must be one of 'sva' or 'quantile'
+		filter_cancer = config["filter_cancer"]
 	log:
 		"logs/extract_data/{keywords}.log"
 	script:
@@ -49,16 +57,17 @@ rule extract_data_exact:
 	input:
 		h5="results/human_matrix_download.h5"
 	output:
-		expr=config["data_dir"] + "exact/{tissue}/expression_normalized.tsv",
-		raw=config["data_dir"] + "exact/{tissue}/expression_raw.tsv",
-		design=config["data_dir"] + "exact/{tissue}/design.tsv",
-		plot=config["data_dir"] + "exact/{tissue}/tsne.pdf"
+		expr=DRESULTS + "exact/{tissue}/expression_normalized.tsv",
+		raw=DRESULTS + "exact/{tissue}/expression_raw.tsv",
+		design=DRESULTS + "exact/{tissue}/design.tsv",
+		plot=DRESULTS + "exact/{tissue}/tsne.pdf"
 	conda:
 		"envs/r_env.yaml"
 	wildcard_constraints:
 		keywords="[a-zA-Z_]+"
 	params:
-		keywords=lambda wildcards: tissue_to_keyword[wildcards.tissue]
+		keywords=lambda wildcards: tissue_to_keyword[wildcards.tissue],
+		filter_cancer = config["filter_cancer"]
 	log:
 		"logs/extract_data_exact/{tissue}.log"
 	script:
@@ -70,13 +79,13 @@ rule extract_data_exact:
 # ------------------------------------------------------------------------------
 rule explore_data:
 	input:
-		expr=config["data_dir"] + "{keywords}/expression_normalized.tsv",
-		raw=config["data_dir"] + "{keywords}/expression_raw.tsv",
-		design=config["data_dir"] + "{keywords}/design.tsv"
+		expr=DRESULTS + "{keywords}/expression_normalized.tsv",
+		raw=DRESULTS + "{keywords}/expression_raw.tsv",
+		design=DRESULTS + "{keywords}/design.tsv"
 	output:
-		config["data_dir"] + "{keywords}/summary.html"
+		DRESULTS + "{keywords}/summary.html"
 	params:
-		pdf_out = config["data_dir"] + "{keywords}/tsne_plots.pdf"
+		pdf_out = DRESULTS + "{keywords}/tsne_plots.pdf"
 	conda:
 		"envs/r_env.yaml"
 	script:
@@ -89,7 +98,7 @@ def gtex_tissue_files(wc):
 	with open("gtex_tissues.txt") as f:
 		tissues = f.readlines()
 	tissues = [x.strip() for x in tissues]
-	return(expand(config["data_dir"] + "{keywords}/summary.html", keywords=tissues))
+	return(expand(DRESULTS + "{keywords}/summary.html", keywords=tissues))
 
 rule get_gtex_tissue_summaries:
 	input:
@@ -104,10 +113,10 @@ rule explore_gtex:
 		tissues="gtex_tissues.txt",
 		h5="results/human_matrix_download.h5"
 	output:
-		expr=config["data_dir"] + "all_gtex/expresion_normalized.tsv",
-		raw=config["data_dir"] + "all_gtex/expresion_raw.tsv",
-		design=config["data_dir"] + "all_gtex/design.tsv",
-		plot=config["data_dir"] + "all_gtex/tsne.pdf"
+		expr=DRESULTS + "all_gtex/expresion_normalized.tsv",
+		raw=DRESULTS + "all_gtex/expresion_raw.tsv",
+		design=DRESULTS + "all_gtex/design.tsv",
+		plot=DRESULTS + "all_gtex/tsne.pdf"
 	threads: 10
 	params:
 		norm_method = "sva"

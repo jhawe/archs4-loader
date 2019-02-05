@@ -43,26 +43,18 @@ fdesign = snakemake@output$design
 # params
 keywords <- snakemake@wildcards$keywords
 
-# check for special keyword
-if("all_samples" %in% keywords) {
-  # will skip the subsetting later
-  keywords <- NULL
-} else {
-  # we expect "_" to be the word separator
-  keywords <- strsplit(keywords, "_")[[1]]
-}
+# we expect "_" to be the word separator
+keywords <- strsplit(keywords, "_")[[1]]
+
 # normalization params
 norm_method <- snakemake@params$norm_method
-if(!norm_method %in% c("sva", "peer", "quantile")) {
+if(!norm_method %in% c("sva", "quantile")) {
   # not recognized
   stop(paste0("Sorry, chosen normalization method '", norm_method,
               "' not supported."))
 }
-
-if(norm_method == "peer") {
-  source("scripts/peer.R")
-}
-
+filter_cancer <- as.logical(snakemake@params$filter_cancer)
+print(paste0("Trying to remove cancer samples: ", filter_cancer))
 # ------------------------------------------------------------------------------
 # Prepare data
 # ------------------------------------------------------------------------------
@@ -72,7 +64,8 @@ design <- load_design(fh5)
 # make some adjustments to the tissue column
 design$tissue <- trimws(design$tissue)
 
-selected_samples <- get_samples_from_design(design, keywords)
+selected_samples <- get_samples_from_design(design, keywords,
+                                            filter_cancer = filter_cancer)
 print(paste0("Found ", length(selected_samples), " samples."))
 
 # fail gracefully
