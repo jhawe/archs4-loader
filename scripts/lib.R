@@ -30,13 +30,18 @@ load_design <- function(fh5, samp=NULL) {
   title = h5read(fh5, "meta/Sample_title")
   taxid = h5read(fh5, "meta/Sample_taxid_ch1")
   type = h5read(fh5, "meta/Sample_type")
+
+  H5close()
+
+  # extract sra_id from relation (contained in the url)
+  sample_sra <- gsub(".*\\/sra\\?term\\=(SRX[0-9]+)+.*", "\\1", relation)
   
   # create design matrix
-  design = cbind.data.frame(sample, tissue, series, organism, molecule,
+  design = cbind.data.frame(sample, sample_sra, tissue, series, organism, molecule,
                  characteristics, description,
                  instrument, processing, library_selection, library_source,
                  library_strategy, platform_id, relation, status, title,
-                 taxid, type, typestringsAsFactors=F)
+                 taxid, type, stringsAsFactors=F)
   
   # check whether we should extract only some specific samples
   if(!is.null(samp)) {
