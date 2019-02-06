@@ -9,7 +9,7 @@
 load_design <- function(fh5, samp=NULL) {
 
   # get info for all samples
-  samples = h5read(fh5, "meta/Sample_geo_accession")
+  sample = h5read(fh5, "meta/Sample_geo_accession")
   tissue = h5read(fh5, "meta/Sample_source_name_ch1")
   genes = h5read(fh5, "meta/genes")
   series = h5read(fh5, "meta/Sample_series_id")
@@ -18,11 +18,24 @@ load_design <- function(fh5, samp=NULL) {
   characteristics = h5read(fh5, "meta/Sample_characteristics_ch1")
   description = h5read(fh5, "meta/Sample_description")
   instrument = h5read(fh5, "meta/Sample_instrument_model")
-
+  processing = h5read(fh5, "meta/Sample_data_processing")
+  library_selection = h5read(fh5, "meta/Sample_library_selection")
+  library_source = h5read(fh5, "meta/Sample_library_source")
+  library_strategy = h5read(fh5, "meta/Sample_library_strategy")
+  platform_id = h5read(fh5, "meta/Sample_platform_id")
+  relation = h5read(fh5, "meta/Sample_relation")
+  status = h5read(fh5, "meta/Sample_status")
+  title = h5read(fh5, "meta/Sample_title")
+  taxid = h5read(fh5, "meta/Sample_taxid_ch1")
+  type = h5read(fh5, "meta/Sample_type")
+  
   # create design matrix
-  design = cbind.data.frame(sample=samples, tissue, series, organism, molecule,
+  design = cbind.data.frame(sample, tissue, series, organism, molecule,
                  characteristics, description,
-                 instrument, stringsAsFactors=F)
+                 instrument, processing, library_selection, library_source,
+                 library_strategy, platform_id, relation, status, title,
+                 taxid, type, typestringsAsFactors=F)
+  
   # check whether we should extract only some specific samples
   if(!is.null(samp)) {
     design = dplyr::filter(design, sample %in% samp)
