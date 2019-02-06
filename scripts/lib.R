@@ -8,6 +8,8 @@
 # ------------------------------------------------------------------------------
 load_design <- function(fh5, samp=NULL) {
 
+  require(rhdf5)
+  
   # get info for all samples
   sample = h5read(fh5, "meta/Sample_geo_accession")
   tissue = h5read(fh5, "meta/Sample_source_name_ch1")
