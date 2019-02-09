@@ -12,6 +12,8 @@
 
 library("rhdf5")
 
+source("scripts/lib.R")
+
 # name of output design file
 design_file = snakemake@output[[1]]
 
